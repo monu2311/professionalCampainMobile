@@ -1,0 +1,63 @@
+{
+  "auth": {
+    "loginFailed": "Anmeldung fehlgeschlagen",
+    "invalidCredentials": "Ungültige Anmeldedaten",
+    "incorrectUsernamePassword": "Der eingegebene Benutzername oder das Passwort ist falsch",
+    "tooManyAttempts": "Zu viele Versuche",
+    "waitBeforeRetry": "Bitte warten Sie einige Minuten vor einem erneuten Versuch",
+    "serverError": "Serverfehler",
+    "serverIssues": "Unsere Server haben Probleme. Bitte versuchen Sie es später erneut",
+    "connectionError": "Verbindungsfehler",
+    "checkInternetConnection": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut",
+    "loginError": "Anmeldefehler",
+    "checkCredentials": "Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut",
+    "loginSuccessful": "Anmeldung erfolgreich!",
+    "logoutSuccessful": "Erfolgreich abgemeldet",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an"
+  },
+  "network": {
+    "noConnection": "Keine Internetverbindung",
+    "slowConnection": "Langsame Internetverbindung",
+    "requestTimeout": "Anfrage-Timeout",
+    "serverNotResponding": "Server antwortet nicht",
+    "tryAgainLater": "Bitte versuchen Sie es später erneut"
+  },
+  "validation": {
+    "emailRequired": "E-Mail ist erforderlich",
+    "passwordRequired": "Passwort ist erforderlich",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "passwordTooShort": "Passwort muss mindestens 8 Zeichen haben",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "phoneRequired": "Telefonnummer ist erforderlich",
+    "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "nameRequired": "Name ist erforderlich",
+    "ageRequired": "Alter ist erforderlich",
+    "invalidAge": "Bitte geben Sie ein gültiges Alter ein",
+    "fieldRequired": "Dieses Feld ist erforderlich",
+    "selectOption": "Bitte wählen Sie eine Option",
+    "uploadImage": "Bitte laden Sie mindestens ein Bild hoch",
+    "acceptTerms": "Bitte akzeptieren Sie die Nutzungsbedingungen"
+  },
+  "general": {
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "tryAgain": "Bitte versuchen Sie es erneut",
+    "errorOccurred": "Ein Fehler ist aufgetreten",
+    "loadingFailed": "Laden der Daten fehlgeschlagen",
+    "saveFailed": "Speichern der Änderungen fehlgeschlagen",
+    "uploadFailed": "Upload fehlgeschlagen",
+    "deleteFailed": "Löschen fehlgeschlagen",
+    "updateFailed": "Aktualisierung fehlgeschlagen",
+    "accessDenied": "Zugriff verweigert",
+    "notFound": "Nicht gefunden",
+    "forbidden": "Zugriff verboten",
+    "internalError": "Interner Serverfehler"
+  },
+  "api": {
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "invalidResponse": "Ungültige Antwort vom Server",
+    "timeout": "Anfrage-Timeout",
+    "rateLimited": "Zu viele Anfragen, bitte warten",
+    "maintenance": "Service wird gewartet",
+    "unavailable": "Service vorübergehend nicht verfügbar"
+  }
+}

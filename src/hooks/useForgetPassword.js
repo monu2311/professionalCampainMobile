@@ -111,9 +111,10 @@ export const useForgetPassword = () => {
 
       // Perform password reset API call
       const response = await dispatch(Forget(values));
+      console.log("response",response)
 
       // Check response status
-      if (response?.status !== 1) {
+      if (response?.status !== "1") {
         throw new Error(response?.message || 'Password reset failed');
       }
 

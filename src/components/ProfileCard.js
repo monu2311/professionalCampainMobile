@@ -21,12 +21,27 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // Theme and constants
-import { COLORS, PADDING, TYPOGRAPHY } from '../constants/theme';
+import { COLORS, PADDING, TYPOGRAPHY, WIDTH } from '../constants/theme';
 
 // Components
 import ButtonWrapper from './ButtonWrapper';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/**
+ * Helper function to get complete image URL
+ */
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+
+  // If it's already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+
+  // Otherwise, prepend the base URL
+  return `https://thecompaniondirectory.com/${imagePath}`;
+};
 
 /**
  * ProfileCard Component
@@ -40,7 +55,6 @@ const ProfileCard = ({
 }) => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
-console.log('ProfileCard Rendered for:', item);
   /**
    * Handle card press with animation
    */
@@ -81,7 +95,7 @@ console.log('ProfileCard Rendered for:', item);
    * Handle view profile press
    */
   const handleViewProfilePress = () => {
-    console.log('ProfileCard: View profile pressed for:', item?.name || item?.id);
+    // console.log('ProfileCard: View profile pressed for:', item?.name || item?.id);
     if (onViewProfile) {
       onViewProfile(item);
     }
@@ -111,10 +125,11 @@ console.log('ProfileCard Rendered for:', item);
         <FastImage
           style={styles.profileImage}
           source={{
-            uri: item?.profile_image || item?.image,
+            uri: item?.profile_file|| item?.profile_image || item?.image,
             priority: FastImage.priority.high,
           }}
-             resizeMode={FastImage.resizeMode.cover}
+          priority={true}
+          resizeMode={FastImage.resizeMode.cover}
           fallback={true}
         />
 
@@ -166,7 +181,7 @@ console.log('ProfileCard Rendered for:', item);
 
             {/* Location */}
             <Text style={styles.userLocation} numberOfLines={1}>
-              📍 {item?.location || item?.city || 'Location not specified'}
+              📍 {item?.country || item?.city || 'Location not specified'}
             </Text>
 
             {/* Description Preview */}
@@ -175,6 +190,8 @@ console.log('ProfileCard Rendered for:', item);
                 {getDescriptionPreview()}
               </Text>
             )}
+
+            
 
             {/* Availability Status */}
             <View style={styles.statusContainer}>
@@ -213,7 +230,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: COLORS.white,
     borderRadius: 20,
-    marginHorizontal: PADDING.medium,
+    // marginHorizontal: PADDING.medium,
     marginVertical: PADDING.small,
     overflow: 'hidden',
     zIndex: 1,
@@ -235,7 +252,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    height: 400,
+    height: WIDTH*0.7,
     width: '100%',
   },
   profileImage: {
@@ -403,7 +420,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   actionContainer: {
-    padding: PADDING.large,
+    // padding: PADDING.small,
     paddingTop: PADDING.medium,
   },
   viewProfileButton: {

@@ -1,0 +1,63 @@
+{
+  "auth": {
+    "loginFailed": "登录失败",
+    "invalidCredentials": "无效凭证",
+    "incorrectUsernamePassword": "您输入的用户名或密码不正确",
+    "tooManyAttempts": "尝试次数过多",
+    "waitBeforeRetry": "请等待几分钟后再试",
+    "serverError": "服务器错误",
+    "serverIssues": "我们的服务器遇到问题。请稍后再试",
+    "connectionError": "连接错误",
+    "checkInternetConnection": "请检查您的网络连接并重试",
+    "loginError": "登录错误",
+    "checkCredentials": "请检查您的凭证并重试",
+    "loginSuccessful": "登录成功！",
+    "logoutSuccessful": "成功登出",
+    "sessionExpired": "您的会话已过期。请重新登录"
+  },
+  "network": {
+    "noConnection": "无网络连接",
+    "slowConnection": "网络连接缓慢",
+    "requestTimeout": "请求超时",
+    "serverNotResponding": "服务器无响应",
+    "tryAgainLater": "请稍后再试"
+  },
+  "validation": {
+    "emailRequired": "电子邮件为必填项",
+    "passwordRequired": "密码为必填项",
+    "invalidEmail": "请输入有效的电子邮件地址",
+    "passwordTooShort": "密码必须至少有8个字符",
+    "passwordMismatch": "密码不匹配",
+    "phoneRequired": "电话号码为必填项",
+    "invalidPhone": "请输入有效的电话号码",
+    "nameRequired": "姓名为必填项",
+    "ageRequired": "年龄为必填项",
+    "invalidAge": "请输入有效的年龄",
+    "fieldRequired": "此字段为必填项",
+    "selectOption": "请选择一个选项",
+    "uploadImage": "请至少上传一张图片",
+    "acceptTerms": "请接受条款和条件"
+  },
+  "general": {
+    "somethingWentWrong": "出了点问题",
+    "tryAgain": "请重试",
+    "errorOccurred": "发生错误",
+    "loadingFailed": "加载数据失败",
+    "saveFailed": "保存更改失败",
+    "uploadFailed": "上传失败",
+    "deleteFailed": "删除失败",
+    "updateFailed": "更新失败",
+    "accessDenied": "拒绝访问",
+    "notFound": "未找到",
+    "forbidden": "禁止访问",
+    "internalError": "内部服务器错误"
+  },
+  "api": {
+    "requestFailed": "请求失败",
+    "invalidResponse": "服务器响应无效",
+    "timeout": "请求超时",
+    "rateLimited": "请求过多，请稍候",
+    "maintenance": "服务正在维护",
+    "unavailable": "服务暂时不可用"
+  }
+}

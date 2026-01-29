@@ -6,7 +6,9 @@ import {COLORS, HEIGHT, IOS, PADDING} from '../../constants/theme';
 import {ICONS} from '../../constants/Icons';
 import {defaultStyles} from '../../constants/Styles';
 import {useNavigation} from '@react-navigation/native';
+import FastImage from 'react-native-fast-image';
 const ChatHeader = ({label, step, data, showRequestButton = true}) => {
+  console.log("data",data)
   const statusHeight = 40;
   const statusHeightAndroid = 10;
 
@@ -43,7 +45,15 @@ const ChatHeader = ({label, step, data, showRequestButton = true}) => {
 
         <View style={{display:'flex',alignItems:'center',flexDirection:'row', flex: 1}}>
           <View>
-            <Image source={{uri : data?.image}}  style={styles.imageStyle} />
+             <FastImage
+              style={styles.imageStyle}
+              source={{
+                uri: data?.image,
+                priority: FastImage.priority.high,
+              }}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+            {/* <Image source={{uri : data?.profile_file}}  style={styles.imageStyle} /> */}
           </View>
           <View style={{marginLeft:10, flex: 1}}>
             <Text style={{...defaultStyles.header, fontSize: 18,color:COLORS?.textColor}}>

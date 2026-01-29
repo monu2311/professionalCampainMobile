@@ -2,7 +2,7 @@
  * Professional Login Screen
  * Handles user authentication with proper validation, error handling, and navigation
  */
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,7 +15,7 @@ import {
 import { Card } from 'react-native-paper';
 import { Formik } from 'formik';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
+import Icon from 'react-native-vector-icons/Ionicons';
 // Theme and constants
 import { COLORS, PADDING, TYPOGRAPHY, WIDTH, SHADOW, IOS } from '../../constants/theme';
 import { ICONS } from '../../constants/Icons';
@@ -31,6 +31,8 @@ import ScreenLoading from '../../components/ScreenLoading';
 import { useLogin } from '../../hooks/useLogin';
 import { useAuth } from '../../hooks/useAuth';
 import { loginValidationSchema } from '../../utils/loginValidation';
+import { useDispatch } from 'react-redux';
+import { fetchProfile } from '../../apiConfig/Services';
 
 /**
  * Login Component
@@ -51,6 +53,7 @@ const Login = () => {
   } = useLogin();
 
   const { updateAuthState } = useAuth();
+  const dispatch = useDispatch();
 
   /**
    * Dismiss keyboard when tapping outside
@@ -67,7 +70,9 @@ const Login = () => {
 
     if (result.success) {
       // Update auth state for the app
+
       await updateAuthState(result.user);
+      fetchProfile(dispatch)
     }
 
     return result;
@@ -95,6 +100,9 @@ const Login = () => {
     password: '',
   };
 
+
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <GradientWrapper style={styles.gradientWrapper}>
       <KeyboardAwareScrollView
@@ -113,120 +121,129 @@ const Login = () => {
         <Pressable onPress={dismissKeyboard}>
           <View style={styles.cardContainer}>
             <Card mode="contained" style={styles.cardStyle}>
-            {/* Header Section */}
-            <View style={styles.headerSection}>
-              <Image source={ICONS.LOGO} style={styles.logo} />
-              <Text style={styles.companyName}>
-                Professional Companionship
-              </Text>
-            </View>
+              {/* Header Section */}
+              <View style={styles.headerSection}>
+                <Image source={ICONS.LOGO} style={styles.logo} />
+                <Text style={styles.companyName}>
+                  Professional Companionship
+                </Text>
+              </View>
 
-            {/* Login Form */}
-            <Formik
-              initialValues={initialValues}
-              validationSchema={loginValidationSchema}
-              onSubmit={handleLoginSubmit}>
-              {({ handleSubmit, values, touched, setFieldValue, setFieldTouched }) => (
-                <View style={styles.formContainer}>
-                  <Text style={styles.loginTitle}>Login</Text>
+              {/* Login Form */}
+              <Formik
+                initialValues={initialValues}
+                validationSchema={loginValidationSchema}
+                onSubmit={handleLoginSubmit}>
+                {({ handleSubmit, values, touched, setFieldValue, setFieldTouched }) => (
+                  <View style={styles.formContainer}>
+                    <Text style={styles.loginTitle}>Login</Text>
 
-                  {/* Username Field */}
-                  <CustomTextInput
-                    label="Username or Email"
-                    placeholder="Enter username or email"
-                    name="user_name"
-                    value={values.user_name}
-                    onChangeText={(value) => {
-                      setFieldValue('user_name', value);
-                      if (errors.user_name) {
-                        clearFieldError('user_name');
+                    {/* Username Field */}
+                    <CustomTextInput
+                      label="Username or Email"
+                      placeholder="Enter username or email"
+                      name="user_name"
+                      value={values.user_name}
+                      onChangeText={(value) => {
+                        setFieldValue('user_name', value);
+                        if (errors.user_name) {
+                          clearFieldError('user_name');
+                        }
+                      }}
+                      onBlur={() => {
+                        setFieldTouched('user_name', true);
+                        handleFieldBlur('user_name', values.user_name);
+                      }}
+                      onFocus={() => handleFieldFocus('user_name')}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="username"
+                      textContentType="username"
+                      keyboardType="email-address"
+                      returnKeyType="next"
+                      error={getFieldState('user_name', values.user_name, touched.user_name).hasError}
+                      errorMessage={getFieldState('user_name', values.user_name, touched.user_name).errorMessage}
+                    />
+
+                    {/* Password Field */}
+                    <CustomTextInput
+                      label="Password"
+                      placeholder="Enter password"
+                      name="password"
+                      value={values.password}
+                      onChangeText={(value) => {
+                        setFieldValue('password', value);
+                        if (errors.password) {
+                          clearFieldError('password');
+                        }
+                      }}
+                      onBlur={() => {
+                        setFieldTouched('password', true);
+                        handleFieldBlur('password', values.password);
+                      }}
+                      rightIcon={
+                        <Pressable onPress={() => setShowPassword(!showPassword)}>
+                          <Icon
+                            name={showPassword ? "eye" : "eye-off"}
+                            size={20}
+                            color={COLORS.placeHolderColor}
+                          />
+                        </Pressable>
                       }
-                    }}
-                    onBlur={() => {
-                      setFieldTouched('user_name', true);
-                      handleFieldBlur('user_name', values.user_name);
-                    }}
-                    onFocus={() => handleFieldFocus('user_name')}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="username"
-                    textContentType="username"
-                    keyboardType="email-address"
-                    returnKeyType="next"
-                    error={getFieldState('user_name', values.user_name, touched.user_name).hasError}
-                    errorMessage={getFieldState('user_name', values.user_name, touched.user_name).errorMessage}
-                  />
+                      onFocus={() => handleFieldFocus('password')}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="password"
+                      textContentType="password"
+                      returnKeyType="done"
+                      onSubmitEditing={handleSubmit}
+                      error={getFieldState('password', values.password, touched.password).hasError}
+                      errorMessage={getFieldState('password', values.password, touched.password).errorMessage}
+                    />
 
-                  {/* Password Field */}
-                  <CustomTextInput
-                    label="Password"
-                    placeholder="Enter password"
-                    name="password"
-                    value={values.password}
-                    onChangeText={(value) => {
-                      setFieldValue('password', value);
-                      if (errors.password) {
-                        clearFieldError('password');
-                      }
-                    }}
-                    onBlur={() => {
-                      setFieldTouched('password', true);
-                      handleFieldBlur('password', values.password);
-                    }}
-                    onFocus={() => handleFieldFocus('password')}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="password"
-                    textContentType="password"
-                    returnKeyType="done"
-                    onSubmitEditing={handleSubmit}
-                    error={getFieldState('password', values.password, touched.password).hasError}
-                    errorMessage={getFieldState('password', values.password, touched.password).errorMessage}
-                  />
-
-                  {/* Forgot Password Link */}
-                  <Pressable
-                    style={styles.forgotPasswordContainer}
-                    onPress={navigateToForgotPassword}
-                    disabled={isLoading}>
-                    <Text style={styles.forgotPasswordText}>
-                      Forgot Password?
-                    </Text>
-                  </Pressable>
-
-                  {/* Login Button */}
-                  <ButtonWrapper
-                    label={isLoading ? "Logging in..." : "Login"}
-                    onClick={handleSubmit}
-                    disabled={isLoading || isTooManyAttempts}
-                    style={styles.loginButton}
-                  />
-
-                  {/* Sign Up Link */}
-                  <View style={styles.signUpContainer}>
-                    <Text style={styles.signUpText}>
-                      Not a member?{' '}
-                      <Text
-                        style={styles.signUpLink}
-                        onPress={navigateToSignUp}
-                        disabled={isLoading}>
-                        Create Account
+                    {/* Forgot Password Link */}
+                    <Pressable
+                      style={styles.forgotPasswordContainer}
+                      onPress={navigateToForgotPassword}
+                      disabled={isLoading}>
+                      <Text style={styles.forgotPasswordText}>
+                        Forgot Password?
                       </Text>
-                    </Text>
-                  </View>
+                    </Pressable>
 
-                  {/* Rate Limiting Warning */}
-                  {isTooManyAttempts && (
-                    <View style={styles.warningContainer}>
-                      <Text style={styles.warningText}>
-                        Too many failed attempts. Please wait before trying again.
+                    {/* Login Button */}
+                    <ButtonWrapper
+                      label={isLoading ? "Logging in..." : "Login"}
+                      onClick={handleSubmit}
+                      disabled={isLoading || isTooManyAttempts}
+                      style={styles.loginButton}
+                    />
+
+                    {/* Sign Up Link */}
+                    <View style={styles.signUpContainer}>
+                      <Text style={styles.signUpText}>
+                        Not a member?{' '}
+                        <Text
+                          style={styles.signUpLink}
+                          onPress={navigateToSignUp}
+                          disabled={isLoading}>
+                          Create Account
+                        </Text>
                       </Text>
                     </View>
-                  )}
-                </View>
-              )}
-            </Formik>
+
+                    {/* Rate Limiting Warning */}
+                    {isTooManyAttempts && (
+                      <View style={styles.warningContainer}>
+                        <Text style={styles.warningText}>
+                          Too many failed attempts. Please wait before trying again.
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </Formik>
             </Card>
           </View>
         </Pressable>

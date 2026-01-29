@@ -1,7 +1,7 @@
-import {createSlice} from '@reduxjs/toolkit';
-import {showMessage} from 'react-native-flash-message';
+import { createSlice } from '@reduxjs/toolkit';
+import { showMessage } from 'react-native-flash-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import apiCall, {BASEURLS} from '../apiConfig/apicall';
+import apiCall, { BASEURLS } from '../apiConfig/apicall';
 import { setDropdown } from './listSlice';
 import { setProfile } from './profileSlice';
 
@@ -9,43 +9,45 @@ const apiSlice = createSlice({
   name: 'auth',
   initialState: {
     data: {
-      signup: {data: null, message: null, error: null, isLoading: false},
-      planBuy: {data: null, message: null, error: null, isLoading: false},
-      changePassword: {data: null, message: null, error: null, isLoading: false},
-      contactUs: {data: null, message: null, error: null, isLoading: false},
-      resendOTP: {data: null, message: null, error: null, isLoading: false},
-      verifyOtp: {data: null, message: null, error: null, isLoading: false},
-      login: {data: null, message: null, error: null, isLoading: false},
-      categories: {data: null, message: null, error: null, isLoading: false},
-      updateProfile: {data: null, message: null, error: null, isLoading: false},
-      saveProfile: {data: null, message: null, error: null, isLoading: false},
+      signup: { data: null, message: null, error: null, isLoading: false },
+      planBuy: { data: null, message: null, error: null, isLoading: false },
+      changePassword: { data: null, message: null, error: null, isLoading: false },
+      contactUs: { data: null, message: null, error: null, isLoading: false },
+      resendOTP: { data: null, message: null, error: null, isLoading: false },
+      verifyOtp: { data: null, message: null, error: null, isLoading: false },
+      login: { data: null, message: null, error: null, isLoading: false },
+      categories: { data: null, message: null, error: null, isLoading: false },
+      updateProfile: { data: null, message: null, error: null, isLoading: false },
+      saveProfile: { data: null, message: null, error: null, isLoading: false },
       forgetPassword: {
         data: null,
         message: null,
         error: null,
         isLoading: false,
       },
-      transaction: {data: null, message: null, error: null, isLoading: false},
-      profile: {data: null, message: null, error: null, isLoading: false},
-      userChatList: {data: null, message: null, error: null, isLoading: false},
-      getChatAllUser: {data: null, message: null, error: null, isLoading: false},
+      transaction: { data: null, message: null, error: null, isLoading: false },
+      profile: { data: null, message: null, error: null, isLoading: false },
+      userChatList: { data: null, message: null, error: null, isLoading: false },
+      getChatAllUser: { data: null, message: null, error: null, isLoading: false },
       userChatHistory: {
         data: null,
         message: null,
         error: null,
         isLoading: false,
       },
-      getNewMsg: {data: null, message: null, error: null, isLoading: false},
-      sendChatMsg: {data: null, message: null, error: null, isLoading: false},
-      newChatMsg: {data: null, message: null, error: null, isLoading: false},
-      planhistory: {data: null, message: null, error: null, isLoading: false},
-      refund: {data: null, message: null, error: null, isLoading: false},
-      userByID: {data: null, message: null, error: null, isLoading: false},
-      search: {data: null, message: null, error: null, isLoading: false},
-      activePlaNSLICE: {data: null, message: null, error: null, isLoading: false},
+      getNewMsg: { data: null, message: null, error: null, isLoading: false },
+      sendChatMsg: { data: null, message: null, error: null, isLoading: false },
+      newChatMsg: { data: null, message: null, error: null, isLoading: false },
+      planhistory: { data: null, message: null, error: null, isLoading: false },
+      refund: { data: null, message: null, error: null, isLoading: false },
+      userByID: { data: null, message: null, error: null, isLoading: false },
+      search: { data: null, message: null, error: null, isLoading: false },
+      activePlaNSLICE: { data: null, message: null, error: null, isLoading: false },
+      membershipPlans: { data: null, message: null, error: null, isLoading: false },
 
 
       sendChatRequest: { data: null, message: null, error: null, isLoading: false },
+      acceptedChatRequest: { data: null, message: null, error: null, isLoading: false },
       pendingChatRequests: { data: null, message: null, error: null, isLoading: false },
       sentChatRequests: { data: null, message: null, error: null, isLoading: false },
       approveChatRequest: { data: null, message: null, error: null, isLoading: false },
@@ -60,40 +62,63 @@ const apiSlice = createSlice({
 
 
 
-      getPendingBookings:{ data: null, message: null, error: null, isLoading: false },
-      createBooking:{ data: null, message: null, error: null, isLoading: false },
-      getBookingById:{ data: null, message: null, error: null, isLoading: false },
-      updateBookingStatus:{ data: null, message: null, error: null, isLoading: false },
-      cancelBooking:{ data: null, message: null, error: null, isLoading: false },
-      getBookingStats:{ data: null, message: null, error: null, isLoading: false },
-      getEscortAvailability:{ data: null, message: null, error: null, isLoading: false },
+      getPendingBookings: { data: null, message: null, error: null, isLoading: false },
+      createBooking: { data: null, message: null, error: null, isLoading: false },
+      getBookingById: { data: null, message: null, error: null, isLoading: false },
+      updateBookingStatus: { data: null, message: null, error: null, isLoading: false },
+      cancelBooking: { data: null, message: null, error: null, isLoading: false },
+      getBookingStats: { data: null, message: null, error: null, isLoading: false },
+      getEscortAvailability: { data: null, message: null, error: null, isLoading: false },
 
-      
+
+      paypalCreateOrder: { data: null, message: null, error: null, isLoading: false },
+      stripeCreateIntent: { data: null, message: null, error: null, isLoading: false },
+      confrimStripeIntent: { data: null, message: null, error: null, isLoading: false },
+      stripeConfirmPayment: { data: null, message: null, error: null, isLoading: false },
+
+      // Carousel API
+      getCarouselUsers: { data: null, message: null, error: null, isLoading: false },
+
+      // Video Upload API
+      uploadVideo: { data: null, message: null, error: null, isLoading: false }
+
+
 
     },
   },
   reducers: {
     start: (state, action) => {
-      const {apiName} = action.payload;
+      const { apiName } = action.payload;
       state.data[apiName].isLoading = true;
       state.data[apiName].data = null;
       state.data[apiName].message = null;
       state.data[apiName].error = null;
     },
     success: (state, action) => {
-      const {apiName, responseData, toastOptions} = action.payload;
-      // console.log('action.payload----', action.payload);
+      const { apiName, responseData, toastOptions } = action.payload;
+      console.log('action.payload----', action.payload);
       state.data[apiName].isLoading = false;
-      state.data[apiName].data = responseData?.data ?? responseData;
+
+      state.data[apiName].data = apiName == "search" ? responseData?.data : responseData?.data ?? responseData;
       state.data[apiName].message = responseData?.message ?? null;
       state.data[apiName].error = responseData?.error ?? null;
 
-      if (toastOptions?.successToast) {
+      if (toastOptions?.successToast &&  apiName != 'acceptedChatRequest') {
         showMessage({
           message: responseData?.message || 'Operation Success',
+          // description: message || 'Please check your credentials and try again.',
           type: 'success',
           icon: 'success',
-          duration: 3000,
+          duration: 4000,
+          floating: true,
+          titleStyle: {
+            fontSize: 16,
+            fontWeight: '600',
+          },
+          textStyle: {
+            fontSize: 14,
+            fontWeight: '400',
+          }
         });
       }
 
@@ -107,7 +132,7 @@ const apiSlice = createSlice({
       }
     },
     failure: (state, action) => {
-      const {apiName, toastOptions, error} = action.payload;
+      const { apiName, toastOptions, error } = action.payload;
       state.data[apiName].isLoading = false;
       state.data[apiName].data = null;
       state.data[apiName].message = error || 'Something went wrong';
@@ -130,58 +155,62 @@ const apiSlice = createSlice({
   },
 });
 
-export const {start, success, failure} = apiSlice.actions;
+export const { start, success, failure } = apiSlice.actions;
 
 export const callApi =
   (apiName, toastOptions, method, url, data = {}, id, params) =>
-  async dispatch => {
-    dispatch(start({apiName}));
-    try {
-      const response = await apiCall(method, url, data, id, params);
-      dispatch(success({apiName, toastOptions, responseData: response}));
-      if(apiName == "search"){
-        const cityData = response?.data?.cityData?.reduce((acc,curr,idx)=>{
+    async dispatch => {
+      dispatch(start({ apiName }));
+      try {
+        const response = await apiCall(method, url, data, id, params);
+        dispatch(success({ apiName, toastOptions, responseData: response }));
+        // console.log(" response in Call ", response)
+        if (apiName == "search") {
+          const cityData = response?.data?.cityData?.reduce((acc, curr, idx) => {
             acc[idx] = {
               item: curr?.city,
-              value:curr?.id
+              value: curr?.id
             }
 
             return acc
-        },[]);
-        const homeCategory = response?.data?.CategoryRepository?.reduce((acc,curr,idx)=>{
-          acc[idx] = {
-            item: curr?.gender,
-            value:curr?.id,
-          }
+          }, []);
+          const homeCategory = response?.data?.CategoryRepository?.reduce((acc, curr, idx) => {
+            acc[idx] = {
+              item: curr?.gender,
+              value: curr?.id,
+            }
 
-          return acc
-      },[]);
+            return acc
+          }, []);
 
 
-     dispatch(setProfile({ data: {homeCategory,cityData} }));
+          dispatch(setProfile({ data: { homeCategory, cityData } }));
 
-        console.log("cityDatacityData",cityData)
-        
+          console.log("cityDatacityData", cityData)
+
+        }
+        // console.log('CALLAPI response', response);
+        return response;
+      } catch (error) {
+        // console.log('CALLAPI  error', error?.response);
+        // console.log('CALLAPI  error', url + ' APi ERRROR' + error);
+        console.log("API URL:- ", url);
+        console.log("API Error:- ", error);
+        dispatch(
+          failure({
+            apiName,
+            toastOptions,
+            error: error.response?.data?.message || error.message,
+          }),
+        );
+        return error.response?.data;
       }
-      // console.log('CALLAPI response', response);
-      return response;
-    } catch (error) {
-      // console.log('CALLAPI  error', error);
-      dispatch(
-        failure({
-          apiName,
-          toastOptions,
-          error: error.response?.data?.message || error.message,
-        }),
-      );
-      return error.response?.data;
-    }
-  };
+    };
 
 export const login = data =>
   callApi(
     'login',
-    {successToast: true, errorToast: true},
+    { successToast: true, errorToast: true },
     'POST',
     '/login',
     data,
@@ -190,7 +219,7 @@ export const login = data =>
 export const categories = data =>
   callApi(
     'categories',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'Get',
     '/categories',
     null,
@@ -199,7 +228,7 @@ export const categories = data =>
 export const plansList = data =>
   callApi(
     'plans',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'Get',
     '/plan-management-list',
     null,
@@ -208,7 +237,7 @@ export const plansList = data =>
 export const register = (data, query) =>
   callApi(
     'signup',
-    {successToast: false, errorToast: true},
+    { successToast: false, errorToast: true },
     'post',
     '/register',
     data,
@@ -219,7 +248,7 @@ export const register = (data, query) =>
 export const UpdateProfile = (data, query) =>
   callApi(
     'updateProfile',
-    {successToast: false, errorToast: true},
+    { successToast: false, errorToast: true },
     'post',
     '/multi-step-register',
     data,
@@ -230,7 +259,7 @@ export const UpdateProfile = (data, query) =>
 export const saveProfile = data =>
   callApi(
     'saveProfile',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'post',
     '/save-profile',
     null,
@@ -239,7 +268,7 @@ export const saveProfile = data =>
 export const Forget = data =>
   callApi(
     'forgetPassword',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'post',
     '/forgot-password',
     data,
@@ -248,7 +277,7 @@ export const Forget = data =>
 export const transactions = data =>
   callApi(
     'transaction',
-    {successToast: true, errorToast: true},
+    { successToast: true, errorToast: true },
     'POST',
     '/process-initial-transactions',
     data,
@@ -257,7 +286,7 @@ export const transactions = data =>
 export const getProfile = data =>
   callApi(
     'profile',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'Get',
     '/profile-detail',
     null,
@@ -267,7 +296,7 @@ export const getProfile = data =>
 export const raiseRefund = id =>
   callApi(
     'refund',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'GET',
     `/plans/initiate-refund/${id}`,
     null,
@@ -277,7 +306,7 @@ export const raiseRefund = id =>
 export const planhistory = () =>
   callApi(
     'planhistory',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'GET',
     '/plans/purchase-history',
     null,
@@ -285,79 +314,103 @@ export const planhistory = () =>
 export const activePlanHistory = () =>
   callApi(
     'activePlaNSLICE',
-    {successToast: false, errorToast: false},
+    { successToast: false, errorToast: false },
     'GET',
     '/plans/purchase-history?type=active',
     null,
   );
 
-
-  // export const activePlanHistory = () => {
-  //   callApi(
-  //     'activePlaNSLICE',
-  //     {successToast: false, errorToast: false},
-  //     'GET',
-  //     '/plans/purchase-history?type=active',
-  //     null,
-  //   );
-  // };
+export const getMembershipPlans = () =>
+  callApi(
+    'membershipPlans',
+    { successToast: false, errorToast: false },
+    'GET',
+    '/plans/companion-membership',
+    null,
+  );
 
 
-  export const getUserByID = id =>
-    callApi(
-      'userByID',
-      {successToast: false, errorToast: false},
-      'GET',
-      `/user-check/${id}`,
-      null,
-    );
+// export const activePlanHistory = () => {
+//   callApi(
+//     'activePlaNSLICE',
+//     {successToast: false, errorToast: false},
+//     'GET',
+//     '/plans/purchase-history?type=active',
+//     null,
+//   );
+// };
 
 
-    export const changePassword = data => {
-
-      return callApi(
-        'changePassword',
-        {successToast: false, errorToast: true},
-        'POST',
-        `/change-password`,
-        data,
-      );
-    };
-
-    export const contactUs = data => {
-
-      return callApi(
-        'contactUs',
-        {successToast: true, errorToast: true},
-        'POST',
-        `/contact-us`,
-        data,
-      );
-    };
-
-    export const search = data => {
-
-      return callApi(
-        'search',
-        {successToast: false, errorToast: false},
-        'GET',
-        `/search`,
-        null,
-        BASEURLS,
-        data
-      );
-    };
+export const getUserByID = id =>
+  callApi(
+    'userByID',
+    { successToast: false, errorToast: false },
+    'GET',
+    `/user-check/${id}`,
+    null,
+  );
 
 
-    export const Buyplan = data => {
-      return callApi(
-        'planBuy',
-        {successToast: true, errorToast: true},
-        'POST',
-        `/plans/buy`,
-        data,
-      );
-    };
+export const changePassword = data => {
+
+  return callApi(
+    'changePassword',
+    { successToast: false, errorToast: true },
+    'POST',
+    `/change-password`,
+    data,
+  );
+};
+
+export const contactUs = data => {
+
+  return callApi(
+    'contactUs',
+    { successToast: true, errorToast: true },
+    'POST',
+    `/contact-us`,
+    data,
+  );
+};
+
+export const search = data => {
+
+  return callApi(
+    'search',
+    { successToast: false, errorToast: false },
+    'GET',
+    `/search`,
+    null,
+    BASEURLS,
+    data
+  );
+};
+
+/**
+ * Get user profile by ID
+ * @param {string|number} userId - The user ID to fetch profile for
+ */
+export const getUserProfileById = userId => {
+  return callApi(
+    'userProfile',
+    { successToast: false, errorToast: false },
+    'GET',
+    `/profile/${userId}`,
+    null,
+    BASEURLS
+  );
+};
+
+
+export const Buyplan = data => {
+  return callApi(
+    'planBuy',
+    { successToast: true, errorToast: true },
+    'POST',
+    `/plans/buy`,
+    data,
+  );
+};
 
 
 
@@ -393,6 +446,20 @@ export const createStripeIntent = (data) =>
     data,
   );
 
+
+/**
+* Create Stripe payment intent
+* @param {Object} data - {plan_id, amount, currency, hours}
+*/
+export const confrimStripeIntent = (data) =>
+  callApi(
+    'confrimStripeIntent',
+    { successToast: false, errorToast: true },
+    'POST',
+    '/stripe/confirm-stripe-intent',
+    data,
+  );
+
 /**
  * Confirm Stripe payment
  * @param {Object} data - {payment_intent_id, user_id, plan_id, hours}
@@ -413,11 +480,11 @@ export const confirmStripePayment = (data) =>
 // ============================================
 
 
-  /**
- * Send chat request to a user
- * @param {number} userId - User ID to send request to
- * @param {Object} data - {message: string}
- */
+/**
+* Send chat request to a user
+* @param {number} userId - User ID to send request to
+* @param {Object} data - {message: string}
+*/
 export const sendChatRequest = (userId, data) =>
   callApi(
     'sendChatRequest',
@@ -492,6 +559,17 @@ export const cancelChatRequest = (requestId) =>
     null,
   );
 
+export const acceptedChatRequest = (requestId) =>
+  callApi(
+    'acceptedChatRequest',
+    { successToast: true, errorToast: true },
+    'Get',
+    `/chat-requests/accepted/${requestId}`,
+    null,
+  );
+
+
+
 /**
  * Check chat request status with a specific user
  * @param {number} userId - User ID to check status with
@@ -518,7 +596,7 @@ export const getChatRequestStats = () =>
   );
 
 
-  //Chat Request 
+//Chat Request 
 /**
  * Get chat for editing
  * @param {number} chatId - Chat message ID
@@ -559,7 +637,7 @@ export const deleteChatMessage = (chatId) =>
     null,
   );
 
-  //get Chat user
+//get Chat user
 export const getChatUser = data =>
   callApi(
     'userChatList',
@@ -567,7 +645,7 @@ export const getChatUser = data =>
     'Get',
     '/chats',
     null,
-);
+  );
 
 
 //get Chat user
@@ -578,7 +656,7 @@ export const getChatAllUser = data =>
     'Get',
     '/chats/get-user-list',
     null,
-);
+  );
 
 
 // get Chat List of one user with another user
@@ -589,7 +667,7 @@ export const getChatHistory = id =>
     'GET',
     `/chats/show/${id}`,
     null,
-);
+  );
 
 //Send message to user
 export const sendChatMessage = data => {
@@ -612,7 +690,7 @@ export const getNewMsg = id =>
     'GET',
     `/chats/get-message/${id}`,
     null,
-);
+  );
 
 
 
@@ -623,7 +701,7 @@ export const getNewMsg = id =>
 
 
 // BOOKING ENDPOINTS
-export const getPendingBookings = ({role = 'escort',status = 'pending'}) =>
+export const getPendingBookings = ({ role = 'escort', status = 'pending' }) =>
   callApi(
     'getPendingBookings',
     { successToast: false, errorToast: true },
@@ -664,8 +742,8 @@ export const cancelBooking = (data) =>
     'cancelBooking',
     { successToast: true, errorToast: true },
     'POST',
-    '/bookings/cancel',
-    data,
+    `/bookings/cancel/${data.booking_id}`,
+    null,
   );
 
 export const getBookingStats = () =>
@@ -677,16 +755,44 @@ export const getBookingStats = () =>
     null,
   );
 
-export const getEscortAvailability = (escortId) =>
+// export const getEscortAvailability = (escortId) =>
+//   callApi(
+//     'getEscortAvailability',
+//     { successToast: false, errorToast: false },
+//     'GET',
+//     `/bookings/availability/${escortId}`,
+//     null,
+//   );
+
+
+export const getEscortAvailability = (data) =>
   callApi(
     'getEscortAvailability',
+    { successToast: true, errorToast: true },
+    'POST',
+    '/availability/check',
+    data,
+  );
+
+// Carousel Users API
+export const getCarouselUsers = () =>
+  callApi(
+    'getCarouselUsers',
     { successToast: false, errorToast: false },
     'GET',
-    `/bookings/availability/${escortId}`,
+    '/carousel-users',
     null,
   );
 
-
-
+// Video Upload API
+export const uploadVideo = (data) =>
+  callApi(
+    'uploadVideo',
+    { successToast: true, errorToast: true },
+    'POST',
+    '/upload-video',
+    data,
+    BASEURLS,
+  );
 
 export default apiSlice.reducer;

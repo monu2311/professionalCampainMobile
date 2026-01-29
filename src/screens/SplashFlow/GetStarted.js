@@ -36,9 +36,9 @@ const GetStarted = () => {
       >
         <View style={styles.displayFlex}>
           <Image source={ICONS?.LOGO} style={styles.logo} />
-          <Text style={{...defaultStyles.buttonTextSmall, marginLeft: 10}}>
+          {/* <Text style={{...defaultStyles.buttonTextSmall, marginLeft: 10}}>
             {'Professional \nCompanionship'}
-          </Text>
+          </Text> */}
         </View>
         <View style={{flex:1,justifyContent:'center',alignItems:'center',paddingBottom:PADDING.small}}>
           <View
@@ -50,8 +50,8 @@ const GetStarted = () => {
               justifyContent: 'center',
               width: '100%',
             }}>
-            <Text style={{...defaultStyles.header,color:COLORS.specialTextColor,fontSize:26}}>Join the Professional</Text>
-            <Text style={{...defaultStyles.header,marginBottom:PADDING.extralarge,color:COLORS.specialTextColor,fontSize:26}}>Companionship Community</Text>
+            <Text style={{...defaultStyles.header,color:COLORS.specialTextColor,fontSize:26}}>Join the Want Some</Text>
+            <Text style={{...defaultStyles.header,marginBottom:PADDING.extralarge,color:COLORS.specialTextColor,fontSize:26}}>Company Community</Text>
             <GradientButton
               label={'Get Started'}
               onClick={()=>nextHandler("PleaseSelect")}
@@ -89,8 +89,8 @@ const GetStarted = () => {
 
 const styles = StyleSheet.create({
   logo: {
-    width: 50,
-    height: 50,
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
   },
   displayFlex: {

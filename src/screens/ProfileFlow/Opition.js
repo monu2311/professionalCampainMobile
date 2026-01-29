@@ -35,6 +35,33 @@ const Opition = () => {
   const [loader, setLoader] = useState(false);
   const dropDownData = useSelector(state => state.dropDown);
 
+  // Helper function to normalize services data (string/array to array)
+  const normalizeServices = (services) => {
+    if (!services) return [];
+
+    // If it's already an array, return as is (filter out empty values)
+    if (Array.isArray(services)) {
+      return services.filter(service => service && service.toString().trim() !== '');
+    }
+
+    // If it's a string, handle different formats
+    if (typeof services === 'string') {
+      const trimmed = services.trim();
+      if (trimmed === '') return [];
+
+      // Handle comma-separated values like "37,42"
+      if (trimmed.includes(',')) {
+        return trimmed.split(',').map(s => s.trim()).filter(s => s !== '');
+      }
+
+      // Single value like "37"
+      return [trimmed];
+    }
+
+    // Fallback for other types
+    return [];
+  };
+
   const route = useRoute();
   console.log('jklasdlkad', route);
   const submitHandler = async value => {
@@ -81,6 +108,21 @@ const Opition = () => {
     fetchData();
   }, [dispatch]);
 
+  // Get normalized services data with fallback sources
+  const getInitialServices = () => {
+    // Try multiple data sources in priority order
+    const servicesFromProfile = profileData?.user_profile?.services;
+    const servicesFromProfileService = profileData?.user_profile_service;
+
+    // Use the first available source
+    const servicesData = servicesFromProfile || servicesFromProfileService;
+
+    return normalizeServices(servicesData);
+  };
+
+  console.log('profileData services:', profileData?.user_profile?.services);
+  console.log('normalized services:', getInitialServices());
+
   return (
     <KeyboardAwareScrollView
       style={{backgroundColor: COLORS.white, padding: 5, flex: 1}}
@@ -90,7 +132,7 @@ const Opition = () => {
       }}>
       <Formik
         initialValues={{
-          services: profileData?.user_profile?.services || '',
+          services: getInitialServices(),
           interests: profileData?.user_profile?.interests || '',
           favourite_things: profileData?.user_profile?.favourite_things || '',
           wishlist: profileData?.user_profile?.wishlist || '',

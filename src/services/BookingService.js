@@ -113,9 +113,10 @@ class BookingService {
    */
   async updateBookingStatus(bookingId, decision, reason = '', dispatch) {
     try {
+      console.log("bookingId, decision, reason = '', dispatch",bookingId, decision, reason = '', dispatch)
       if (!bookingId || !decision) throw new Error('Missing booking ID or decision');
 
-      const data = { booking_id: bookingId, decision, reason };
+      const data = { booking_id: bookingId,action: decision, reason };
       const response = await dispatch(updateBookingStatus(data));
 
       if (response?.success) {
@@ -188,16 +189,16 @@ class BookingService {
 
   /**
    * Get escort availability by ID
-   * @param {number} escortId - Escort ID
+   * @param {Object} data - ESCORT PAYLOAD
    * @param {Object} dispatch - Redux dispatch
    * @returns {Promise<Object>}
    */
-  async getEscortAvailability(escortId, dispatch) {
+  async getEscortAvailability(data, dispatch) {
     try {
-      if (!escortId) throw new Error('Escort ID is required');
+      if (!data?.escort_id) throw new Error('Escort ID is required');
 
-      const response = await dispatch(getEscortAvailability(escortId));
-
+      const response = await dispatch(getEscortAvailability(data));
+      console.log("response response getEscortAvailability", response)
       if (response?.success || response?.data) {
         return {
           success: true,

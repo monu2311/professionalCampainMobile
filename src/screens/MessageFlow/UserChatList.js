@@ -9,6 +9,7 @@ import {fetchProfile} from '../../apiConfig/Services';
 import {RefreshControl} from 'react-native-gesture-handler';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
+import ContentProtection from '../../components/ContentProtection';
 
 
 // Animated Chat Item Component
@@ -304,7 +305,8 @@ const UserChatList = () => {
       {/* Sticky Header */}
       {renderHeader()}
 
-      <Animated.View style={[styles.listContainer, { opacity: listOpacity }]}>
+      <ContentProtection style={styles.contentContainer}>
+        <Animated.View style={[styles.listContainer, { opacity: listOpacity }]}>
         <FlatList
           refreshControl={
             <RefreshControl
@@ -327,7 +329,8 @@ const UserChatList = () => {
           windowSize={10}
           ItemSeparatorComponent={ItemSeparator}
         />
-      </Animated.View>
+        </Animated.View>
+      </ContentProtection>
     </View>
   );
 };
@@ -338,6 +341,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fafafa',
+  },
+  contentContainer: {
+    flex: 1,
   },
   listContainer: {
     flex: 1,

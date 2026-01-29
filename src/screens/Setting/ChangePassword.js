@@ -1,5 +1,5 @@
-import React from 'react'
-import { Image, StyleSheet, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import { Image, StyleSheet, Text, View, Pressable } from 'react-native'
 import Select from '../../components/Select'
 import ButtonWrapper from '../../components/ButtonWrapper'
 import { COLORS, HEIGHT, PADDING, TYPOGRAPHY, WIDTH } from '../../constants/theme'
@@ -15,12 +15,18 @@ import * as Yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux'
 import { changePassword } from '../../reduxSlice/apiSlice'
 import ScreenLoading from '../../components/ScreenLoading'
+import Icon from 'react-native-vector-icons/Feather';
 
 
 const ChangePassword = () => {
   const changePAss = useSelector(state => state?.auth?.data?.changePassword);
-    const navigation = useNavigation();
+  const navigation = useNavigation();
   const dispatch = useDispatch();
+
+  // State for password visibility
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const submitHandler = async(value) => {
       try {
@@ -87,25 +93,81 @@ const ChangePassword = () => {
                 }}>
                 Change Password
               </Text>
-              {ChangePassworddata?.map(item => (
-              <View style={{width: '100%'}} key={item?.label}>
-                {item?.labelShow && (
-                  <Text style={styles.label}>{item?.label}</Text>
-                )}
-               
-                  <CustomTextInput
-                    key={item?.label}
-                    label={item?.labelShow ? null : item?.label}
-                    placeholder={item?.placeholder}
-                    name={item?.name}
-                    inputContainer={{
-                      height: item?.area ? 140 : 46,
-                      alignItems: 'flex-start',
-                    }}
-                  />
-               
+
+              {/* Old Password Field */}
+              <View style={{width: '100%'}}>
+                <CustomTextInput
+                  label="Previous Password"
+                  placeholder="Enter your current password"
+                  name="old_password"
+                  secureTextEntry={!showOldPassword}
+                  inputContainer={{
+                    height: 46,
+                  }}
+                  rightIcon={
+                    <Pressable
+                      onPress={() => setShowOldPassword(!showOldPassword)}
+                      style={styles.eyeButton}
+                    >
+                      <Icon
+                        name={showOldPassword ? "eye" : "eye-off"}
+                        size={20}
+                        color={COLORS.placeHolderColor}
+                      />
+                    </Pressable>
+                  }
+                />
               </View>
-            ))}
+
+              {/* New Password Field */}
+              <View style={{width: '100%'}}>
+                <CustomTextInput
+                  label="New Password"
+                  placeholder="Enter new password"
+                  name="password"
+                  secureTextEntry={!showNewPassword}
+                  inputContainer={{
+                    height: 46,
+                  }}
+                  rightIcon={
+                    <Pressable
+                      onPress={() => setShowNewPassword(!showNewPassword)}
+                      style={styles.eyeButton}
+                    >
+                      <Icon
+                        name={showNewPassword ? "eye" : "eye-off"}
+                        size={20}
+                        color={COLORS.placeHolderColor}
+                      />
+                    </Pressable>
+                  }
+                />
+              </View>
+
+              {/* Confirm Password Field */}
+              <View style={{width: '100%'}}>
+                <CustomTextInput
+                  label="Confirm New Password"
+                  placeholder="Re-enter new password"
+                  name="confirm_password"
+                  secureTextEntry={!showConfirmPassword}
+                  inputContainer={{
+                    height: 46,
+                  }}
+                  rightIcon={
+                    <Pressable
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={styles.eyeButton}
+                    >
+                      <Icon
+                        name={showConfirmPassword ? "eye" : "eye-off"}
+                        size={20}
+                        color={COLORS.placeHolderColor}
+                      />
+                    </Pressable>
+                  }
+                />
+              </View>
 
 
 
@@ -173,6 +235,11 @@ const styles = StyleSheet.create({
   viewStyle: {
     alignSelf: 'center',
     width: '94%',
+  },
+  eyeButton: {
+    padding: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

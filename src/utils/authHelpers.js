@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   ACCOUNT_STEP: 'account_step',
   USER_DATA: 'userData',
   REMEMBER_ME: 'rememberMe',
+  MEMBERSHIP_STATUS: 'membershipStatus',
 };
 
 /**
@@ -182,6 +183,125 @@ export const isValidTokenFormat = (token) => {
 };
 
 /**
+ * Check if token exists and is valid
+ * @returns {Promise<boolean>} Token validity status
+ */
+export const isTokenValid = async () => {
+  try {
+    const token = await getAuthToken();
+    if (!token) {
+      return false;
+    }
+    return isValidTokenFormat(token);
+  } catch (error) {
+    console.error('Error validating token:', error);
+    return false;
+  }
+};
+
+/**
+ * Handle token expiration
+ * Clears auth data and navigates to login
+ * @param {Object} navigation - Navigation object
+ * @returns {Promise<void>}
+ */
+export const handleTokenExpiration = async (navigation) => {
+  try {
+    // Clear all authentication data
+    await clearAuthData();
+
+    // Show user message
+    const { showMessage } = await import('react-native-flash-message');
+    showMessage({
+      message: 'Session Expired',
+      description: 'Your session has expired. Please login again.',
+      type: 'warning',
+      duration: 4000,
+    });
+
+    // Navigate to login
+    if (navigation) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+  } catch (error) {
+    console.error('Error handling token expiration:', error);
+  }
+};
+
+/**
+ * Store membership status for both Companions and Members
+ * @param {Object} membershipData - Membership data including both fields
+ * @returns {Promise<boolean>} Success status
+ */
+export const storeMembershipStatus = async (membershipData) => {
+  try {
+    const dataToStore = {
+      has_active_membership: membershipData.has_active_membership,
+      is_user_can_logged_in: membershipData.is_user_can_logged_in,
+      profile_type: membershipData.profile_type,
+      updated_at: new Date().toISOString(),
+    };
+
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.MEMBERSHIP_STATUS,
+      JSON.stringify(dataToStore)
+    );
+    return true;
+  } catch (error) {
+    console.error('Error storing membership status:', error);
+    return false;
+  }
+};
+
+/**
+ * Get complete membership status
+ * @returns {Promise<Object|null>} Membership status object or null
+ */
+export const getMembershipStatus = async () => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.MEMBERSHIP_STATUS);
+    if (data) {
+      return JSON.parse(data);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting membership status:', error);
+    return null;
+  }
+};
+
+/**
+ * Check if user has active membership based on profile type
+ * @returns {Promise<boolean>} Active membership status
+ */
+export const hasActiveMembership = async () => {
+  try {
+    const membershipData = await getMembershipStatus();
+    if (!membershipData) return false;
+
+    const { profile_type, has_active_membership, is_user_can_logged_in } = membershipData;
+
+    // For Companions (profile_type = '1')
+    if (profile_type === '1') {
+      return has_active_membership === true;
+    }
+
+    // For Members (profile_type = '2')
+    if (profile_type === '2') {
+      return is_user_can_logged_in === 'Active';
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking active membership:', error);
+    return false;
+  }
+};
+
+/**
  * Handle authentication success
  * @param {Object} authData - Authentication response data
  * @returns {Promise<boolean>} Success status
@@ -198,6 +318,14 @@ export const handleAuthSuccess = async (authData) => {
     await storeAuthToken(token);
     await storeAccountStep(details.account_step || 0);
     await storeUserData(details);
+
+    // Store membership status with both fields
+    const membershipData = {
+      has_active_membership: details.has_active_membership,
+      is_user_can_logged_in: details.is_user_can_logged_in,
+      profile_type: details.profile_type,
+    };
+    await storeMembershipStatus(membershipData);
 
     return true;
   } catch (error) {

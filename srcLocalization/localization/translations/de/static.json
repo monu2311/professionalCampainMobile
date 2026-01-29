@@ -1,0 +1,167 @@
+{
+  "gender": {
+    "male": "Männlich",
+    "female": "Weiblich",
+    "straightMale": "Heterosexueller Mann",
+    "gayMale": "Schwuler Mann",
+    "biMale": "Bisexueller Mann",
+    "straightFemale": "Heterosexuelle Frau",
+    "gayFemale": "Schwule Frau",
+    "biFemale": "Bisexuelle Frau"
+  },
+  "countries": {
+    "australia": "Australien",
+    "china": "China",
+    "germany": "Deutschland",
+    "india": "Indien",
+    "italy": "Italien",
+    "mexico": "Mexiko",
+    "turkey": "Türkei",
+    "unitedKingdom": "Vereinigtes Königreich",
+    "unitedStates": "Vereinigte Staaten von Amerika"
+  },
+  "profileTypes": {
+    "trainedCompanions": "Ausgebildete Begleiter",
+    "memberSubscription": "Als Mitglied abonnieren",
+    "companion": "Begleiter",
+    "member": "Mitglied"
+  },
+  "cities": {
+    "melbourne": "Melbourne",
+    "sydney": "Sydney",
+    "adelaide": "Adelaide",
+    "perth": "Perth",
+    "darwin": "Darwin",
+    "goldCoast": "Gold Coast",
+    "brisbane": "Brisbane",
+    "hobart": "Hobart"
+  },
+  "bodyDetails": {
+    "bustSizes": {
+      "aCup": "A-Körbchen",
+      "bCup": "B-Körbchen",
+      "cCup": "C-Körbchen",
+      "dCup": "D-Körbchen",
+      "ddCup": "DD-Körbchen",
+      "eCup": "E-Körbchen",
+      "fCup": "F-Körbchen",
+      "gCup": "G-Körbchen",
+      "ggCup": "GG-Körbchen",
+      "hCup": "H-Körbchen",
+      "hhCup": "HH-Körbchen",
+      "jCup": "J-Körbchen",
+      "jjCup": "JJ-Körbchen"
+    },
+    "dressSizes": {
+      "size4": "Größe 4",
+      "size5": "Größe 5",
+      "size6": "Größe 6",
+      "size7": "Größe 7",
+      "size8": "Größe 8",
+      "size9": "Größe 9",
+      "size10": "Größe 10",
+      "size11": "Größe 11",
+      "size12": "Größe 12",
+      "size13": "Größe 13",
+      "size14": "Größe 14",
+      "size15": "Größe 15",
+      "size16": "Größe 16",
+      "size17": "Größe 17",
+      "size18": "Größe 18",
+      "size19": "Größe 19",
+      "size20": "Größe 20",
+      "size21": "Größe 21",
+      "size22": "Größe 22",
+      "size23": "Größe 23",
+      "size24": "Größe 24"
+    },
+    "bodyTypes": {
+      "athletic": "Sportlich",
+      "average": "Durchschnittlich",
+      "bbw": "BBW",
+      "cuddly": "Knuddelig",
+      "curvaceous": "Kurvenreich",
+      "curvey": "Kurvig",
+      "fullFigured": "Vollschlank",
+      "hourGlass": "Sanduhr",
+      "muscular": "Muskulös/Definiert",
+      "petite": "Zierlich",
+      "petiteSlim": "Zierlich/Schlank",
+      "slim": "Schlank",
+      "toned": "Straff",
+      "voluptuous": "Üppig"
+    },
+    "eyeColors": {
+      "amber": "Bernstein",
+      "black": "Schwarz",
+      "blue": "Blau",
+      "brown": "Braun",
+      "green": "Grün",
+      "grey": "Grau",
+      "hazel": "Haselnuss",
+      "red": "Rot"
+    },
+    "hairColors": {
+      "auburn": "Kastanienbraun",
+      "black": "Schwarz",
+      "blonde": "Blond",
+      "brown": "Braun",
+      "brunette": "Brünett",
+      "burgundy": "Burgunder",
+      "dark": "Dunkel",
+      "ginger": "Rotblond",
+      "red": "Rot",
+      "other": "Andere"
+    },
+    "hairStyles": {
+      "curly": "Lockig",
+      "long": "Lang",
+      "shaved": "Rasiert",
+      "short": "Kurz",
+      "straight": "Glatt"
+    }
+  },
+  "ethnicity": {
+    "caucasian": "Kaukasisch",
+    "africanAmerican": "Afroamerikanisch",
+    "hispanic": "Hispanisch",
+    "asian": "Asiatisch",
+    "nativeAmerican": "Indianer",
+    "multiracial": "Gemischtrassig"
+  },
+  "education": {
+    "highSchool": "Abitur",
+    "university": "Universität",
+    "postGraduate": "Aufbaustudium",
+    "doctorate": "Promotion"
+  },
+  "interestedBooking": {
+    "menOnly": "Nur Männer",
+    "womenOnly": "Nur Frauen",
+    "menAndWomen": "Männer und Frauen",
+    "allGenders": "Alle Geschlechter"
+  },
+  "services": {
+    "activityParticipation": "Aktivitätsteilnahme",
+    "travelCompanionship": "Reisebegleitung",
+    "companionshipOutings": "Begleitung für Ausflüge",
+    "diningCompanions": "Essensbegleitung"
+  },
+  "days": {
+    "monday": "Montag",
+    "tuesday": "Dienstag",
+    "wednesday": "Mittwoch",
+    "thursday": "Donnerstag",
+    "friday": "Freitag",
+    "saturday": "Samstag",
+    "sunday": "Sonntag"
+  },
+  "socialMedia": {
+    "facebook": "Facebook",
+    "twitter": "Twitter",
+    "instagram": "Instagram",
+    "pinterest": "Pinterest",
+    "tumbler": "Tumbler",
+    "tiktok": "TikTok"
+  }
+}

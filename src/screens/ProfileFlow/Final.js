@@ -12,6 +12,8 @@ import {saveProfile} from '../../reduxSlice/apiSlice';
 import ScreenLoading from '../../components/ScreenLoading';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import membershipService, { PROFILE_TYPES, MEMBER_STATUS } from '../../services/MembershipService';
+import { getUserData } from '../../utils/authHelpers';
 
 const Final = () => {
   const routes = useRoute();
@@ -46,6 +48,26 @@ const Final = () => {
       const response = await dispatch(saveProfile());
       if (response?.status === 1) {
         await AsyncStorage.setItem('account_step', '8'); // Save progress
+
+        // Check if this is a Member who has paid for a plan
+        const userData = await getUserData();
+        if (userData?.profile_type === '2' || userData?.profile_type === 2) {
+          // Member profile type
+          const membershipData = await membershipService.getMembershipStatus();
+          if (membershipData?.is_plan_paid === true) {
+            // Member has paid, update status to Active since registration is complete
+            const updatedData = {
+              ...membershipData,
+              is_user_can_logged_in: MEMBER_STATUS.ACTIVE,
+              is_plan_paid: undefined, // Remove the temporary flag
+              account_step: 8,
+              status: true
+            };
+            await membershipService.storeMembershipData(updatedData);
+            membershipService.membershipData = updatedData;
+            membershipService.notifyListeners();
+          }
+        }
 
         setStep(1);
       }

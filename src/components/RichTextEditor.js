@@ -8,7 +8,7 @@ const RichTextEditor = ({placeholder, onChange,name,value}) => {
   const richText = useRef(null);
 
   return (
-    <View>
+    <View style={styles.editorContainer}>
       <RichToolbar
         style={styles.richBar}
         flatContainerStyle={styles.flatStyle}
@@ -52,7 +52,7 @@ const RichTextEditor = ({placeholder, onChange,name,value}) => {
         initialContentHTML={value} 
         pasteAsPlainText={true}
         editorStyle={{
-          contentCSSText: `font-size: 12px;padding: 12px 18px;color:${COLORS.placeHolderColor};fontFamily: Quicksand-Regular;fontWeight:500;height:220px`,
+          contentCSSText: `font-size: 12px;padding: 12px 18px;color:${COLORS.placeHolderColor};fontFamily: Quicksand-Regular;fontWeight:500;height:220px;border-Radius:1px; border-color:${COLORS.black};`,
         }}
         styleWithCSS={true}
       />
@@ -61,26 +61,113 @@ const RichTextEditor = ({placeholder, onChange,name,value}) => {
 };
 
 const styles = StyleSheet.create({
-  richBar: {
-    backgroundColor: COLORS.white,
-    borderTopRightRadius: 8,
-    borderTopLeftRadius: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
+  container: {
     width: '100%',
-    borderColor: '#CCCCCC',
-    borderWidth: 1,
-    overflow: 'scroll',
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    position: 'relative',
+    marginBottom: 8,
+  },
+  label: {
+    fontFamily: TYPOGRAPHY.QUICKBLOD,
+    color: COLORS.labelColor,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  editorContainer: {
+    borderColor: '#E1E5E9',
+    borderWidth: 1.5,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    overflow: 'hidden',
+    // iOS Shadows
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    // shadowOpacity: 0.06,
+    shadowRadius: 1,
+    // Android Shadow
+    elevation: 1,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+    borderRadius: 12,
+  },
+  richBar: {
+    backgroundColor: '#F8F9FA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1E5E9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  flatStyle: {
+    paddingHorizontal: 4,
+  },
+  selectedButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginHorizontal: 2,
+  },
+  unselectedButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginHorizontal: 2,
   },
   editor: {
-    // padding:PADDING.small,
-    height:220,
-    borderRadius: 8,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderColor: '#CCCCCC',
-    borderWidth: 0.5,
-    borderTopWidth: 0,
-    fontSize: 8,
+    backgroundColor: COLORS.white,
+    fontSize: 14,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E1E5E9',
+    backgroundColor: '#F8F9FA',
+  },
+  characterCount: {
+    fontSize: 12,
+    fontFamily: 'Quicksand-Regular',
+    color: COLORS.placeHolderColor,
+    fontWeight: '500',
+  },
+  overLimitText: {
+    color: COLORS.red,
+    fontWeight: '600',
+  },
+  errorText: {
+    color: COLORS.red,
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 16,
+    fontFamily: 'Quicksand-Regular',
+    fontWeight: '500',
+  },
+  warningText: {
+    color: COLORS.red,
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 16,
+    fontFamily: 'Quicksand-Regular',
+    fontWeight: '600',
   },
 });
 

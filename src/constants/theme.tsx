@@ -22,7 +22,9 @@ export const COLORS = {
   // Success colors
   successDark: '#0a3622',
   successLight: '#d1e7de',
-  successMedium: '#a3d0bb'
+  successMedium: '#a3d0bb',
+  // Error colors
+  errorDark: '#dc2626'
 };
 
 export const TYPOGRAPHY = {

@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState, memo} from 'react';
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -25,14 +25,13 @@ import {Formik} from 'formik';
 import Radio from '../../components/Radio';
 import CheckBox from '../../components/CheckBox';
 import Availability from '../../components/Availability';
-import dayjs from 'dayjs';
 import {useDispatch, useSelector} from 'react-redux';
 import ScreenLoading from '../../components/ScreenLoading';
 import {setProfile} from '../../reduxSlice/profileSlice';
 import {UpdateProfile} from '../../reduxSlice/apiSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Contact = () => {
+const Contact = memo(() => {
   const navigation = useNavigation();
   const route = useRoute();
   const profileData = useSelector(state => state.profile)
@@ -49,11 +48,12 @@ const Contact = () => {
       const day=[];
       Object.entries(value).forEach(([key, val]) => {
         if (key === 'avail' && Array.isArray(val)) {
-          val.forEach((item, index) => {
+          val.forEach((item) => {
             day.push(item.day);
-            if (item.isChecked) {
+            
               day_from.push(item.from || '10:00 AM');
               day_until.push(item.until || '10:00 PM');
+            if (item.isChecked) {
               day_unavailable.push(0);
             } else {
               day_unavailable.push(1)
@@ -63,17 +63,17 @@ const Contact = () => {
           formData.append(key, val ?? '');
         }
       });
-      if(day_unavailable?.length != 0){
+
         formData.append(`day_unavailable`,day_unavailable.join(","));
 
-      }
+ 
       formData.append(`day_from`,day_from.join(","));
       formData.append(`day_until`,day_until.join(","));
       formData.append(`day`,day.join(","));
       if( route.name ==   "EditContact"){
         formData.append('is_editing',true);
       }
-
+      console.log("formData",formData)
       dispatch(setProfile({ user_profile: value}));
       const response = await dispatch(UpdateProfile(formData, {step: 5}));
       if (response?.status === 200) {
@@ -121,45 +121,45 @@ const Contact = () => {
       )
       .when('additional_phone_no', {
         is: val => !!val,
-        then: Yup.string().required(
+        then: schema => schema.required(
           'Please confirm your additional phone number',
         ),
-        otherwise: Yup.string().notRequired(),
+        otherwise: schema => schema.notRequired(),
       }),
 
-    website: Yup.string().url('Enter a valid URL').notRequired(),
+    // website: Yup.string().url('Enter a valid URL').notRequired(),
 
-    service_incall: Yup.string().required(
-      'Please select a service incall option',
-    ),
+    // service_incall: Yup.string().required(
+    //   'Please select a service incall option',
+    // ),
 
-    clients_with_disability: Yup.string().required('This field is required'),
+    // clients_with_disability: Yup.string().required('This field is required'),
 
-    contact_method_phonecalls: Yup.string().required('This field is required'),
+    // contact_method_phonecalls: Yup.string().required('This field is required'),
 
-    flexRadioDefault: Yup.string().required('Please make a selection'),
+    // flexRadioDefault: Yup.string().required('Please make a selection'),
 
-    more_contact_instructions: Yup.string().max(
-      500,
-      'Max 500 characters allowed',
-    ),
+    // more_contact_instructions: Yup.string().max(
+    //   500,
+    //   'Max 500 characters allowed',
+    // ),
 
-    social_fb: Yup.string().url('Enter a valid Facebook URL').notRequired(),
-    social_x: Yup.string().url('Enter a valid X (Twitter) URL').notRequired(),
-    social_insta: Yup.string().url('Enter a valid Instagram URL').notRequired(),
-    social_pinterest: Yup.string()
-      .url('Enter a valid Pinterest URL')
-      .notRequired(),
-    social_tumblr: Yup.string().url('Enter a valid Tumblr URL').notRequired(),
-    social_tiktok: Yup.string().url('Enter a valid TikTok URL').notRequired(),
+    // social_fb: Yup.string().url('Enter a valid Facebook URL').notRequired(),
+    // social_x: Yup.string().url('Enter a valid X (Twitter) URL').notRequired(),
+    // social_insta: Yup.string().url('Enter a valid Instagram URL').notRequired(),
+    // social_pinterest: Yup.string()
+    //   .url('Enter a valid Pinterest URL')
+    //   .notRequired(),
+    // social_tumblr: Yup.string().url('Enter a valid Tumblr URL').notRequired(),
+    // social_tiktok: Yup.string().url('Enter a valid TikTok URL').notRequired(),
 
-    notice_req_24hrs: Yup.string().required('This field is required'),
+    // notice_req_24hrs: Yup.string().required('This field is required'),
 
-    availabity_extras: Yup.string().max(300, 'Max 300 characters allowed'),
+    // availabity_extras: Yup.string().max(300, 'Max 300 characters allowed'),
 
-    display_different_availabilities: Yup.string().required(
-      'This field is required',
-    ),
+    // display_different_availabilities: Yup.string().required(
+    //   'This field is required',
+    // ),
 
     // avail: Yup.array()
     //   .of(
@@ -222,7 +222,7 @@ const isFocused  = useIsFocused();
       const allData = dateArray?.reduce((acc,res,idx) => {
         const data = profileData?.user_availability?.filter((item)=> item?.day == res?.day);
         acc[idx] = {
-          isChecked: data?.[0]?.unavailable ?  true : false,
+          isChecked: data?.[0]?.unavailable ?  false : true,
               day: res?.day,
               from:  data?.[0]?.from ||  res?.from,
               until: data?.[0]?.until || res?.until,
@@ -277,7 +277,7 @@ const isFocused  = useIsFocused();
             avail: arrayOfObject,
           }}
           enableReinitialize={true}
-          // validationSchema={validationSchema}
+          validationSchema={validationSchema}
           onSubmit={values => submitHandler(values)}>
           {({
             handleSubmit,
@@ -293,7 +293,7 @@ const isFocused  = useIsFocused();
                 alignSelf: 'center',
                 backgroundColor: COLORS.white,
               }}>
-                {console.log("asdasdasd",errors)}
+                {/* Removed debug logging to prevent render cycles */}
               <Text
                 style={{
                   ...defaultStyles.header,
@@ -312,6 +312,7 @@ const isFocused  = useIsFocused();
                   label={item?.label}
                   placeholder={item?.placeholder}
                   name={item?.name}
+                  keyboardType={item?.name?.includes('phone') ? 'numeric' : 'default'}
                 />
               ))}
               <Text
@@ -665,7 +666,7 @@ const isFocused  = useIsFocused();
       </ScrollView>
     </KeyboardAvoidingView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   flexstyle: {
@@ -716,5 +717,7 @@ const styles = StyleSheet.create({
     width: '94%',
   },
 });
+
+
 
 export default Contact;

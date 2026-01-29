@@ -8,6 +8,10 @@ export const genderList = [
     item: 'Female',
     value: 'Female',
   },
+  {
+    item: 'Other',
+    value: 'Other',
+  },
 ];
 
 export const COUNTRYLIST = [
@@ -52,11 +56,11 @@ export const COUNTRYLIST = [
 
 export const PROFILETYPELIST = [
   {
-    item: 'Trained Companions',
+    item: ' Companions',
     value: '1',
   },
   {
-    item: 'Subscribe as a Member',
+    item: 'Member',
     value: '2',
   },
 ];

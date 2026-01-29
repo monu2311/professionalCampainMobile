@@ -2,6 +2,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
@@ -23,9 +24,7 @@ import ButtonWrapper from '../../components/ButtonWrapper';
 import {
   COUNTRYLIST,
   detailfirst,
-  detailsData,
   detailSecond,
-  homeBase,
   profileCategory,
 } from '../../constants/Static';
 import Select from '../../components/Select';
@@ -33,7 +32,6 @@ import CustomTextInput from '../../components/CustomTextInput';
 import { Formik } from 'formik';
 import RichTextEditor from '../../components/RichTextEditor';
 import axios from 'axios';
-import MultiSelectComponent from '../../components/MultiSelectComponent';
 import MultiDropDown from '../../components/MultiDropDown';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateProfile } from '../../reduxSlice/apiSlice';
@@ -45,12 +43,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Details = () => {
   const formikRef = useRef();
-  const profileData = useSelector(state => state?.profile);
+  const profileData = useSelector(state => state?.profile || {});
   console.log('profileDataprofileData', profileData);
-  const dropDownData = useSelector(state => state.dropDown);
+  const dropDownData = useSelector(state => state?.dropDown || {});
   const navigation = useNavigation();
   const route = useRoute();
   const [loader, setLoader] = useState(false);
+  const [userProfileType, setUserProfileType] = useState(null);
   const dispatch = useDispatch();
 
   const submitHanlder = async value => {
@@ -59,10 +58,15 @@ const Details = () => {
       const formdata = new FormData();
       formdata.append('is_editing', true);
       for (const key in value) {
+        // Skip companion_price for non-companions
+        if (key === 'companion_price' && userProfileType !== 1 && userProfileType !== "1") {
+          continue;
+        }
+
         if (key === 'profile_categories') {
           formdata.append('profile_categories', value[key].join(','));
         } else if (key === 'height') {
-          formdata.append('height', parseInt(value.height)); // Convert to integer
+          formdata.append('height', parseInt(value.height, 10)); // Convert to integer
         } else {
           // Handle array-to-comma string conversion for keys like "day"
           if (Array.isArray(value[key])) {
@@ -91,7 +95,13 @@ const Details = () => {
         }
       }
     } catch (error) {
-      console.log('error--->', error);
+      console.log('Details submit error--->', error);
+      // Show user-friendly error message
+      Alert.alert(
+        'Update Failed',
+        'Unable to update profile details. Please check your information and try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setLoader(false);
     }
@@ -99,7 +109,7 @@ const Details = () => {
 
   const [states, setStates] = useState([]);
 
-  const getStateHandler = async id => {
+  const getStateHandler = useCallback(async id => {
     // console.log("id",id)
     try {
       const response = await axios({
@@ -114,7 +124,7 @@ const Details = () => {
         setStates(data);
         const suburbId = profileData?.user_profile?.suburbs;
         console.log('sdsadsad', typeof suburbId);
-        if (suburbId && data.some(d => d.value == suburbId)) {
+        if (suburbId && data.some(d => d.value === suburbId)) {
           formikRef.current?.setFieldValue('hdn_suburbs', suburbId);
         }
       }
@@ -122,20 +132,59 @@ const Details = () => {
     } catch (error) {
       console.log('getStatehandler resposne-->', error);
     }
-  };
+  }, [profileData?.user_profile?.suburbs]);
 
   useEffect(() => {
     const fetchData = async () => {
-      await fetchAllAPIs(dispatch); // Pass dispatch to fetchAllAPIs
+      try {
+        await fetchAllAPIs(dispatch); // Pass dispatch to fetchAllAPIs
+      } catch (error) {
+        console.log('Error fetching APIs:', error);
+      }
     };
-    if (profileData?.user_profile?.homelocation) {
-      getStateHandler(profileData?.user_profile?.homelocation);
+
+    try {
+      if (profileData?.user_profile?.homelocation) {
+        getStateHandler(profileData?.user_profile?.homelocation);
+      }
+      fetchData();
+    } catch (error) {
+      console.log('Error in Details useEffect:', error);
     }
+  }, [dispatch, profileData?.user_profile, getStateHandler]);
 
-    fetchData();
-  }, [dispatch, profileData?.user_profile]);
+  // Get user profile type for conditional rendering
+  useEffect(() => {
+    const getUserProfileType = async () => {
+      // Try to get from Redux state first
+      let profileType = profileData?.user_profile?.profile_type;
 
-  const profileCategoires = profileData?.profile_category?.map((item) => item?.category_id?.toString())
+      // If not in Redux, try AsyncStorage
+      if (!profileType) {
+        try {
+          const userData = await AsyncStorage.getItem('userData');
+          if (userData) {
+            const parsedData = JSON.parse(userData);
+            profileType = parsedData?.profile_type ||
+                         parsedData?.user?.profile_type ||
+                         parsedData?.data?.profile_type;
+          }
+        } catch (error) {
+          console.log('Error getting user profile type:', error);
+        }
+      }
+
+      setUserProfileType(profileType);
+    };
+
+    getUserProfileType();
+  }, [profileData]);
+
+  const profileCategoires = profileData?.profile_category && Array.isArray(profileData.profile_category)
+    ? profileData.profile_category
+      .map((item) => item?.category_id?.toString())
+      .filter(Boolean) // Remove null/undefined values
+    : [];
 
   return (
     <KeyboardAvoidingView
@@ -192,7 +241,7 @@ const Details = () => {
                 backgroundColor: COLORS.white,
               }}>
               {/*  What is your Home Base City   */}
-              {console.dir(values)}
+              {/* {console.dir(values)} */}
               <Text
                 style={{
                   ...defaultStyles.header,
@@ -269,14 +318,17 @@ const Details = () => {
                   flexWrap: 'wrap',
                 }}>
 
-                <CustomTextInput
-                  label="Companion Price (per hour)"
-                  placeholder="Enter your hourly rate"
-                  name="companion_price"
-                  keyboardType="numeric"
-                  inputContainer={styles.priceInput}
-                  noMargin={true}
-                />
+                {/* Only show companion price for companions (profile_type 1) */}
+                {(userProfileType === 1 || userProfileType === "1") && (
+                  <CustomTextInput
+                    label="Companion Price (per hour)"
+                    placeholder="Enter your hourly rate"
+                    name="companion_price"
+                    keyboardType="numeric"
+                    inputContainer={styles.priceInput}
+                    noMargin={true}
+                  />
+                )}
                 {detailSecond?.map(item => (
                   <Select
                     key={item?.label}
@@ -362,7 +414,7 @@ const Details = () => {
               <View style={{ ...styles.viewStyle, marginBottom: PADDING.large }}>
                 <RichTextEditor
                   onChange={e => setFieldValue('about_me', e)}
-                  placeholder="Write about you"
+                  placeholder="Tell us about yourself..."
                   name="about_me"
                   value={values?.about_me}
                 />
@@ -373,12 +425,11 @@ const Details = () => {
               </Text>
               <View style={{ ...styles.viewStyle, marginBottom: PADDING.large }}>
                 <RichTextEditor
-                  onChange={e => setFieldValue('my_reviews', e)}
-                  // onChange={handleChange}
-                  placeholder="Write about you"
-                  name="my_reviews"
-                  value={values?.my_reviews}
-                />
+                        onChange={e => setFieldValue('my_reviews', e)}
+                        placeholder="Share your experience and reviews..."
+                        name="my_reviews"
+                        value={values?.my_reviews}
+                      />
               </View>
 
               <ButtonWrapper
@@ -404,6 +455,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: PADDING.medium,
     paddingHorizontal: PADDING.large,
+  },
+  priceInput: {
+    width: WIDTH * 0.434,
+    marginRight: 10,
   },
   circleBox: {
     backgroundColor: COLORS.mainColor,

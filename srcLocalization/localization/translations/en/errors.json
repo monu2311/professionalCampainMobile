@@ -1,0 +1,63 @@
+{
+  "auth": {
+    "loginFailed": "Login Failed",
+    "invalidCredentials": "Invalid Credentials",
+    "incorrectUsernamePassword": "The username or password you entered is incorrect",
+    "tooManyAttempts": "Too Many Attempts",
+    "waitBeforeRetry": "Please wait a few minutes before trying again",
+    "serverError": "Server Error",
+    "serverIssues": "Our servers are experiencing issues. Please try again later",
+    "connectionError": "Connection Error",
+    "checkInternetConnection": "Please check your internet connection and try again",
+    "loginError": "Login Error",
+    "checkCredentials": "Please check your credentials and try again",
+    "loginSuccessful": "Login successful!",
+    "logoutSuccessful": "Logged out successfully",
+    "sessionExpired": "Your session has expired. Please login again"
+  },
+  "network": {
+    "noConnection": "No internet connection",
+    "slowConnection": "Slow internet connection",
+    "requestTimeout": "Request timed out",
+    "serverNotResponding": "Server is not responding",
+    "tryAgainLater": "Please try again later"
+  },
+  "validation": {
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "phoneRequired": "Phone number is required",
+    "invalidPhone": "Please enter a valid phone number",
+    "nameRequired": "Name is required",
+    "ageRequired": "Age is required",
+    "invalidAge": "Please enter a valid age",
+    "fieldRequired": "This field is required",
+    "selectOption": "Please select an option",
+    "uploadImage": "Please upload at least one image",
+    "acceptTerms": "Please accept terms and conditions"
+  },
+  "general": {
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Please try again",
+    "errorOccurred": "An error occurred",
+    "loadingFailed": "Failed to load data",
+    "saveFailed": "Failed to save changes",
+    "uploadFailed": "Upload failed",
+    "deleteFailed": "Delete failed",
+    "updateFailed": "Update failed",
+    "accessDenied": "Access denied",
+    "notFound": "Not found",
+    "forbidden": "Forbidden access",
+    "internalError": "Internal server error"
+  },
+  "api": {
+    "requestFailed": "Request failed",
+    "invalidResponse": "Invalid response from server",
+    "timeout": "Request timeout",
+    "rateLimited": "Too many requests, please wait",
+    "maintenance": "Service under maintenance",
+    "unavailable": "Service temporarily unavailable"
+  }
+}

@@ -8,6 +8,7 @@ import {
   Image,
   Pressable,
   SafeAreaView,
+  Alert,
   // Modal,
 } from 'react-native';
 import GradientWrapper from '../../components/GradientWrapper';
@@ -30,7 +31,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../reduxSlice/apiSlice';
 import ScreenLoading from '../../components/ScreenLoading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchAllAPIs } from '../../apiConfig/Services';
+import { fetchAllAPIs, fetchPlans } from '../../apiConfig/Services';
+import { storeUserData, storeAccountStep } from '../../utils/authHelpers';
 
 const CreateAccount = () => {
   const dropDownData = useSelector((state)=>state.dropDown);
@@ -41,6 +43,8 @@ const CreateAccount = () => {
   const [visible, setVisible] = React.useState(false);
   const [loading,setLoading] =  useState(false);
   const [member,setMember] =  useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
@@ -49,6 +53,7 @@ const CreateAccount = () => {
   const  nextHandler = ()=>{
     hideModal();
     console.log("jashdkjas",member);
+    fetchPlans(dispatch);
     navigation.navigate(member != 1 ? 'SelectPlan'  : 'CreateProfile');
   }
 
@@ -63,11 +68,11 @@ const CreateAccount = () => {
     email: Yup.string()
       .email('Invalid email format')
       .required('Email is required'),
-  
+
     password: Yup.string()
-      .min(6, 'Password must be at least 6 characters')
+      .min(8, 'Password must be at least 8 characters')
       .required('Password is required'),
-  
+
       confirm_password: Yup.string()
       .oneOf([Yup.ref('password')], 'Passwords must match')
       .required('Confirm Password is required'),
@@ -75,11 +80,11 @@ const CreateAccount = () => {
     gender: Yup.string()
       .required('Gender is required'),
   
-    country: Yup.string()
-      .required('Country is required'),
+    // country: Yup.string()
+    //   .required('Country is required'),
   
-    state: Yup.number()
-      .required('State is required'),
+    // state: Yup.number()
+    //   .required('State is required'),
   
     profile_type: Yup.string()
       .required('Profile type is required'),
@@ -117,13 +122,112 @@ const CreateAccount = () => {
       // payload.profile_type = 1;
       setMember(value?.profile_type);
       const  response  = await  dispatch(register(value,{step:1}));
-      console.log("success--->",response)
+      console.log("Registration success response--->", response);
+      console.log("Response details--->", response?.details);
+      console.log("Response user data--->", response?.user);
+      console.log("Response data--->", response?.data);
+      console.log("Form values being stored--->", value);
+
       if(response?.status ===1){
         await AsyncStorage.setItem("ChapToken",response?.token)
+
+        // Enhanced user data extraction and storage
+        // Try multiple locations for user data
+        const responseUserData = response?.details || response?.user || response?.data || {};
+
+        // Extract user_id from multiple possible locations
+        const extractedUserId = responseUserData?.user_id ||
+                              responseUserData?.id ||
+                              response?.user_id ||
+                              response?.details?.id ||
+                              null;
+
+        console.log("Extracted user_id from registration:", extractedUserId);
+
+        // Comprehensive user data object with form data + response data
+        const userDataToStore = {
+          // Form data (guaranteed to be available)
+          email: value?.email || null,
+          user_name: value?.user_name || null,
+          gender: value?.gender || null,
+          profile_type: parseInt(value?.profile_type) || value?.profile_type || null,
+
+          // Response data
+          user_id: extractedUserId,
+          account_step: responseUserData?.account_step || 1,
+          status: responseUserData?.status || false,
+          is_plan_purchased: responseUserData?.is_plan_purchased || false,
+
+          // Set initial membership status for Members
+          is_user_can_logged_in: parseInt(value?.profile_type) === 2 ? 'Not Purchased' : null,
+          is_plan_paid: false, // Track if plan payment is done
+
+          // Additional fields that might be in response
+          phone: responseUserData?.phone || responseUserData?.phone_no || value?.phone || null,
+
+          // Spread response details last to allow override
+          ...responseUserData
+        };
+
+        console.log("Complete user data being stored:", userDataToStore);
+
+        // Validate critical fields before storage
+        if (!userDataToStore.email) {
+          console.warn("Warning: email is missing from user data");
+        }
+        if (!userDataToStore.user_name) {
+          console.warn("Warning: user_name is missing from user data");
+        }
+        if (!userDataToStore.user_id) {
+          console.warn("Warning: user_id is missing from registration response");
+        }
+
+        // Store the comprehensive user data
+        await storeUserData(userDataToStore);
+
+        // Store account step separately for easy access
+        await storeAccountStep(userDataToStore.account_step || 1);
+
+        // Verify what was actually stored (for debugging)
+        try {
+          const verifyStoredData = await AsyncStorage.getItem('userData');
+          console.log("Verification - Data actually stored in AsyncStorage:", JSON.parse(verifyStoredData || '{}'));
+        } catch (verifyError) {
+          console.error("Error verifying stored data:", verifyError);
+        }
+
         showModal();
       }
     } catch (error) {
-      console.log("error--->",error)
+      console.log("error--->",error);
+
+      // Handle server validation errors
+      let errorMessage = 'Registration failed. Please try again.';
+
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.errors) {
+        // Handle validation errors from server
+        const errors = error.response.data.errors;
+        if (errors.password) {
+          errorMessage = errors.password[0] || 'Password validation failed';
+        } else if (errors.email) {
+          errorMessage = errors.email[0] || 'Email validation failed';
+        } else {
+          // Get first error message
+          const firstError = Object.values(errors)[0];
+          errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      // Show error alert
+      Alert.alert(
+        'Registration Error',
+        errorMessage,
+        [{ text: 'OK', style: 'default' }]
+      );
     }finally{
       setLoading(false)
     }
@@ -186,11 +290,12 @@ const CreateAccount = () => {
                   color: COLORS.black,
                   marginBottom: 0,
                   marginTop: 20,
+                  marginBottom: PADDING.medium,
                 }}>
-                Create Profile with
+                Create Profile 
               </Text>
               {/* {console.log("kasjdasjdjkasdjk",error)} */}
-              <Text
+              {/* <Text
                 style={{
                   ...defaultStyles.header,
                   ...styles.heading,
@@ -198,7 +303,7 @@ const CreateAccount = () => {
                   marginBottom: PADDING.medium,
                 }}>
                 Professional Companionship
-              </Text>
+              </Text> */}
               <CustomTextInput
                 label="Profile Name (User Name) *"
                 placeholder="User Name"
@@ -213,11 +318,31 @@ const CreateAccount = () => {
                 label="Password *"
                 placeholder="Password"
                 name="password"
+                secureTextEntry={!showPassword}
+                rightIcon={
+                  <Pressable onPress={() => setShowPassword(!showPassword)}>
+                    <Icon
+                      name={showPassword ? "eye" : "eye-off"}
+                      size={20}
+                      color={COLORS.placeHolderColor}
+                    />
+                  </Pressable>
+                }
               />
               <CustomTextInput
                 label="Confirm Password *"
                 placeholder="Confirm Password"
                 name="confirm_password"
+                secureTextEntry={!showConfirmPassword}
+                rightIcon={
+                  <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    <Icon
+                      name={showConfirmPassword ? "eye" : "eye-off"}
+                      size={20}
+                      color={COLORS.placeHolderColor}
+                    />
+                  </Pressable>
+                }
               />
               <Select
                 label="Gender *"
@@ -226,7 +351,7 @@ const CreateAccount = () => {
                 data={genderList}
                 containerStyle={{width: WIDTH * 0.91}}
               />
-              <Select
+               {/* <Select
                 label="Select Country"
                 placeholder="Select Country"
                 name="country"
@@ -240,7 +365,7 @@ const CreateAccount = () => {
                 name="state"
                 data={states}
                  containerStyle={{width: WIDTH * 0.91}}
-              />
+              />  */}
               <Select
                 label="Profile Type *"
                 placeholder="Profile Type"
@@ -277,14 +402,14 @@ const CreateAccount = () => {
                       fontWeight: '400',
                       textDecorationLine: 'underline',
                     }}
-                    onPress={() => navigation.navigate('singup')}>
+                    onPress={() => navigation.navigate('TermsAndConditions')}>
                     {'Terms and Conditions'}
                   </Text>
                 </Text>
               </View>
 
               <View style={{marginTop: PADDING.small}}>
-                <ButtonWrapper label={'Sing Up'} onClick={handleSubmit} />
+                <ButtonWrapper label={'Sign Up'} onClick={handleSubmit} />
               </View>
             </View>
           )}

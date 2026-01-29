@@ -1,0 +1,63 @@
+{
+  "auth": {
+    "loginFailed": "فشل في تسجيل الدخول",
+    "invalidCredentials": "بيانات اعتماد غير صالحة",
+    "incorrectUsernamePassword": "اسم المستخدم أو كلمة المرور التي أدخلتها غير صحيحة",
+    "tooManyAttempts": "محاولات كثيرة جداً",
+    "waitBeforeRetry": "يرجى الانتظار بضع دقائق قبل المحاولة مرة أخرى",
+    "serverError": "خطأ في الخادم",
+    "serverIssues": "خوادمنا تواجه مشاكل. يرجى المحاولة مرة أخرى لاحقاً",
+    "connectionError": "خطأ في الاتصال",
+    "checkInternetConnection": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى",
+    "loginError": "خطأ في تسجيل الدخول",
+    "checkCredentials": "يرجى التحقق من بيانات اعتمادك والمحاولة مرة أخرى",
+    "loginSuccessful": "تم تسجيل الدخول بنجاح!",
+    "logoutSuccessful": "تم تسجيل الخروج بنجاح",
+    "sessionExpired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى"
+  },
+  "network": {
+    "noConnection": "لا يوجد اتصال بالإنترنت",
+    "slowConnection": "اتصال بطيء بالإنترنت",
+    "requestTimeout": "انتهت مهلة الطلب",
+    "serverNotResponding": "الخادم لا يستجيب",
+    "tryAgainLater": "يرجى المحاولة مرة أخرى لاحقاً"
+  },
+  "validation": {
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح",
+    "passwordTooShort": "كلمة المرور يجب أن تكون على الأقل 8 أحرف",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "phoneRequired": "رقم الهاتف مطلوب",
+    "invalidPhone": "يرجى إدخال رقم هاتف صالح",
+    "nameRequired": "الاسم مطلوب",
+    "ageRequired": "العمر مطلوب",
+    "invalidAge": "يرجى إدخال عمر صالح",
+    "fieldRequired": "هذا الحقل مطلوب",
+    "selectOption": "يرجى اختيار خيار",
+    "uploadImage": "يرجى تحميل صورة واحدة على الأقل",
+    "acceptTerms": "يرجى قبول الشروط والأحكام"
+  },
+  "general": {
+    "somethingWentWrong": "حدث خطأ ما",
+    "tryAgain": "يرجى المحاولة مرة أخرى",
+    "errorOccurred": "حدث خطأ",
+    "loadingFailed": "فشل في تحميل البيانات",
+    "saveFailed": "فشل في حفظ التغييرات",
+    "uploadFailed": "فشل في التحميل",
+    "deleteFailed": "فشل في الحذف",
+    "updateFailed": "فشل في التحديث",
+    "accessDenied": "رُفض الوصول",
+    "notFound": "غير موجود",
+    "forbidden": "وصول محظور",
+    "internalError": "خطأ داخلي في الخادم"
+  },
+  "api": {
+    "requestFailed": "فشل الطلب",
+    "invalidResponse": "استجابة غير صالحة من الخادم",
+    "timeout": "انتهت مهلة الطلب",
+    "rateLimited": "طلبات كثيرة جداً، يرجى الانتظار",
+    "maintenance": "الخدمة قيد الصيانة",
+    "unavailable": "الخدمة غير متاحة مؤقتاً"
+  }
+}

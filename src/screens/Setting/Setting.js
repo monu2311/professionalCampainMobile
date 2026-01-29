@@ -29,7 +29,7 @@ const enhancedSettingsData = [
   {
     id: 2,
     label: 'Help & Support',
-    navigation: 'AboutUs',
+    navigation: 'HelpSupport',
     icon: 'help',
     description: 'Get assistance and find answers',
     color: '#4ECDC4',
@@ -147,6 +147,7 @@ const AnimatedSettingItem = ({ item, index, onPress }) => {
 // Profile Header Component
 const ProfileHeader = () => {
   const profileData = useSelector(state => state.profile?.user_profile);
+  console.log("profileData?.profile_image",profileData?.profile_image)
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerScale = useRef(new Animated.Value(0.9)).current;
 
@@ -189,7 +190,7 @@ const ProfileHeader = () => {
               <FastImage
                 style={styles.profileImage}
                 source={{
-                  uri: "https://thecompaniondirectory.com/public/"+profileData?.profile_image,
+                  uri: "https://thecompaniondirectory.com/"+profileData?.profile_image,
                   priority: FastImage.priority.high,
                 }}
                 resizeMode={FastImage.resizeMode.cover}

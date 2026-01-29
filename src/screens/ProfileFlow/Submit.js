@@ -7,12 +7,27 @@ import {COLORS, HEIGHT, PADDING, WIDTH} from '../../constants/theme';
 import {defaultStyles} from '../../constants/Styles';
 import ButtonWrapper from '../../components/ButtonWrapper';
 import {useNavigation} from '@react-navigation/native';
+import { search } from '../../reduxSlice/apiSlice';
+import { useDispatch } from 'react-redux';
 
 const Submit = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const handleSubmit = () => {
-    navigation.navigate('Home');
+    dispatch(search({
+      city: null,
+      category: null,
+      filter_type: null,
+      page: 1,
+      page_size: 32
+    }));
+
+     navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+    });
+
   };
   const heading = {
     ...defaultStyles.header,

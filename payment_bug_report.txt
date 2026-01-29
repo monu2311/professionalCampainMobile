@@ -1,0 +1,335 @@
+================================================================================
+           PAYMENT SYSTEM BUG REPORT - Professional Companionship App
+================================================================================
+Date: December 2024
+Frontend Version: React Native 0.80.1
+API Base URL: https://thecompaniondirectory.com/api
+
+================================================================================
+                              EXECUTIVE SUMMARY
+================================================================================
+
+This document outlines critical payment-related bugs preventing users from
+purchasing plans in the Professional Companionship mobile application. The app
+has three distinct plan types, each with different API endpoints and workflows.
+
+Critical Issue: Users cannot complete payment transactions for any plan type
+Severity: HIGH - Revenue Impact
+Affected Modules: PayPal Integration, Stripe Integration, Plan Management
+
+================================================================================
+                         PLAN TYPES AND API ENDPOINTS
+================================================================================
+
+1. PLAN MANAGEMENT LIST (Membership Users)
+-------------------------------------------
+Purpose: General subscription plans for existing users
+API Endpoint: GET /api/plan-management-list
+Full URL: https://thecompaniondirectory.com/api/plan-management-list
+Usage: Main subscription selection
+
+
+2.  COMPANION MEMBERSHIP
+-----------------------
+Purpose: Premium membership features for companions
+API Endpoint: GET /plans/companion-membership
+Full URL: https://thecompaniondirectory.com/api/plans/companion-membership
+Usage: Premium tier subscription
+
+
+3.STARTER PLAN (Boot Profiles)
+--------------------------------
+Purpose: Initial profile creation for new users
+API Endpoint: GET /api/starter-plans
+Full URL: https://thecompaniondirectory.com/api/starter-plans
+
+================================================================================
+                          PAYMENT WORKFLOW OVERVIEW
+================================================================================
+
+User Flow:
+1. User selects plan type → SelectPlan.js or MembershipPlansScreen.js
+2. User chooses payment method → SelectMethod.js (PayPal or Stripe)
+3. Payment processing → PayPalWebView.js or StripePaymentScreen.js
+4. Payment confirmation → API call to backend
+5. Success/Error handling → Navigation to appropriate screen
+
+Payment Methods Supported:
+- PayPal (WebView-based approval flow)
+- Stripe (Native card input with payment intent)
+
+================================================================================
+                        DETAILED API WORKFLOW
+================================================================================
+
+PAYPAL PAYMENT FLOW:
+--------------------
+1. Create Order:
+   POST /paypal/create-order
+   Request Body: {
+     "plan_id": number,
+     "amount": number,
+     "currency": "aud",
+     "hours": number (optional, only for plan_id: 2)
+   }
+   Response: {
+     "success": boolean,
+     "approval_url": string,
+     "order_id": string,
+     "message": string
+   }
+
+2. User Approval:
+   - Redirect to approval_url in WebView
+   - Monitor URL for success/cancel patterns
+
+3. Confirm Payment:
+   POST /payment/paypal/confirm
+   Request Body: {
+     "order_id": string,
+     "plan_id": number,
+     "hours": number (optional)
+   }
+   Response: {
+     "success": boolean,
+     "message": string,
+     "transaction_id": string
+   }
+
+STRIPE PAYMENT FLOW:
+--------------------
+1. Create Payment Intent:
+   POST /stripe/create-payment-intent
+   Request Body: {
+     "plan_id": number,
+     "amount": number,
+     "currency": "aud",
+     "hours": number (optional)
+   }
+   Response: {
+     "success": boolean,
+     "client_secret": string,
+     "payment_intent_id": string
+   }
+
+2. Collect Card Details:
+   - Use Stripe SDK CardField component
+   - Process payment with client_secret
+
+3. Confirm Payment:
+   POST /stripe/confirm-payment
+   Request Body: {
+     "payment_intent_id": string,
+     "user_id": string,  // ⚠️ BUG: Currently hardcoded as "458"
+     "plan_id": number,
+     "hours": number
+   }
+   Response: {
+     "success": boolean,
+     "message": string,
+     "transaction_id": string
+   }
+
+================================================================================
+                       IDENTIFIED BUGS AND ISSUES
+================================================================================
+
+CRITICAL BUGS:
+--------------
+1. BUG #001 - Hardcoded User ID in Stripe Payment
+   Location: StripePaymentScreen.js:183
+   Current Code: user_id: "458" ?? paymentData.userId
+   Issue: Always sends "458" as user_id, ignoring actual user
+   Impact: All Stripe payments credited to wrong user
+   Fix Required: Use actual user ID from Redux state or props
+
+2. BUG #002 - API Response Key Typo
+   Location: apiSlice.js, Services.js
+   Issue: Backend returns "planManagemetData" (missing 'n' in Management)
+   Impact: May cause undefined errors if key changes
+   Fix Required: Correct typo in backend or add fallback handling
+
+3. BUG #003 - Missing Error States
+   Location: Multiple payment screens
+   Issue: Limited error handling for network failures
+   Impact: App crashes or freezes on network timeout
+   Fix Required: Add comprehensive try-catch blocks and timeout handling
+
+4. BUG #004 - Inconsistent Navigation After Payment
+   Location: PayPalWebView.js, StripePaymentScreen.js
+   Issue: Different navigation targets for same payment type
+   Impact: Users may get lost after payment
+   Current Logic:
+   - membership → Main screen
+   - boostProfile → Main screen
+   - subscription → Home screen
+   Fix Required: Standardize navigation flow
+
+5. BUG #005 - Plan ID 2 Special Handling
+   Location: Throughout payment flow
+   Issue: Plan ID 2 requires "hours" parameter but validation missing
+   Impact: Payment may fail silently for hourly plans
+   Fix Required: Add proper validation and error messages
+
+MODERATE ISSUES:
+----------------
+6. Duplicate Error Handling Methods
+   Location: PaymentService.js:175 & :192
+   Issue: Two handlePaymentError methods defined
+   Impact: Confusion and potential bugs
+
+7. Missing Token Refresh Logic
+   Location: apicall.js
+   Issue: No automatic token refresh on 401 errors
+   Impact: Payments fail after token expiration
+
+8. WebView URL Matching Issues
+   Location: PayPalWebView.js
+   Issue: URL pattern matching may fail with redirects
+   Current Patterns: ['success', 'completed', 'approved', 'PayerID=']
+   Fix Required: More robust URL parsing
+
+================================================================================
+                        SCREEN FLOW MAPPING
+================================================================================
+
+Entry Points:
+1. SelectPlan.js → For starter plans during registration
+2. MembershipPlansScreen.js → For companion membership
+3. Profile screens → For plan upgrades
+
+Payment Method Selection:
+- SelectMethod.js → Common payment method selector
+  ├── PayPal → PayPalWebView.js
+  └── Stripe → StripePaymentScreen.js
+
+Success Navigation:
+- Main.js → For membership and boost purchases
+- Home.js → For regular subscriptions
+- CreateProfile.js → For initial registration
+
+================================================================================
+                     BACKEND REQUIREMENTS & FIXES
+================================================================================
+
+IMMEDIATE FIXES NEEDED:
+1. ✓ Verify all payment endpoints are active and responding
+2. ✓ Fix user_id validation - should accept dynamic user IDs
+3. ✓ Ensure payment confirmation endpoints return consistent structure
+4. ✓ Add proper error messages for validation failures
+5. ✓ Fix typo: "planManagemetData" → "planManagementData"
+
+API RESPONSE STANDARDIZATION:
+All payment endpoints should return:
+{
+  "success": boolean,
+  "message": string,
+  "data": {
+    "transaction_id": string,
+    "plan_id": number,
+    "user_id": string,
+    "amount": number,
+    "currency": string,
+    "status": "pending|completed|failed"
+  },
+  "error": {
+    "code": string,
+    "message": string,
+    "details": object
+  }
+}
+
+ERROR CODES TO IMPLEMENT:
+- PAYMENT_001: Invalid plan ID
+- PAYMENT_002: Invalid amount
+- PAYMENT_003: User not authenticated
+- PAYMENT_004: Payment method not supported
+- PAYMENT_005: Payment already processed
+- PAYMENT_006: Insufficient plan details
+- PAYMENT_007: Hours required for hourly plans
+
+================================================================================
+                      TESTING SCENARIOS
+================================================================================
+
+Test Case 1: Starter Plan Purchase
+1. New user registration
+2. Select starter plan
+3. Choose PayPal
+4. Complete payment
+Expected: User navigates to CreateProfile
+
+Test Case 2: Membership Upgrade
+1. Existing user
+2. Select companion membership
+3. Choose Stripe
+4. Enter card details
+5. Complete payment
+Expected: User navigates to Main screen with active membership
+
+Test Case 3: Hourly Plan (ID: 2)
+1. Select plan with ID 2
+2. Specify hours
+3. Complete payment
+Expected: Hours properly recorded in backend
+
+Test Case 4: Payment Failure
+1. Use test card that declines
+2. Observe error handling
+Expected: Clear error message, user can retry
+
+Test Case 5: Network Timeout
+1. Slow network simulation
+2. Attempt payment
+Expected: Timeout handling, user can retry
+
+================================================================================
+                        RECOMMENDED ACTIONS
+================================================================================
+
+FRONTEND TEAM:
+1. Remove hardcoded user_id (line 183, StripePaymentScreen.js)
+2. Add comprehensive error handling
+3. Implement loading states for all API calls
+4. Add retry mechanism for failed payments
+5. Standardize navigation flow
+
+BACKEND TEAM:
+1. Validate all payment endpoints are functional
+2. Fix response structure inconsistencies
+3. Add proper error codes and messages
+4. Implement idempotency for payment confirmations
+5. Add detailed logging for debugging
+6. Fix typo in response key
+7. Ensure user_id validation accepts dynamic values
+
+QA TEAM:
+1. Test all three plan types thoroughly
+2. Verify payment success/failure scenarios
+3. Test with different user accounts
+4. Validate proper plan activation after payment
+5. Check refund flow functionality
+
+================================================================================
+                         CONTACT & SUPPORT
+================================================================================
+
+For questions about this bug report:
+- Frontend Issues: Review payment service implementations
+- Backend API: Check endpoint logs and response structures
+- Payment Gateway: Verify PayPal/Stripe webhook configurations
+
+Files to Review:
+- /src/screens/LoginFlow/SelectPlan.js
+- /src/screens/LoginFlow/SelectMethod.js
+- /src/screens/Payment/PayPalWebView.js
+- /src/screens/Payment/StripePaymentScreen.js
+- /src/screens/SubScriptionFlow/MembershipPlansScreen.js
+- /src/services/PaymentService.js
+- /src/reduxSlice/apiSlice.js
+- /src/apiConfig/Services.js
+- /src/apiConfig/apicall.js
+
+================================================================================
+                              END OF REPORT
+================================================================================

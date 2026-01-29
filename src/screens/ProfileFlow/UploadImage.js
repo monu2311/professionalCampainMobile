@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   Alert,
   Image,
@@ -13,18 +13,14 @@ import {
 } from 'react-native';
 
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {COLORS, HEIGHT, PADDING, WIDTH} from '../../constants/theme';
+import {COLORS, HEIGHT, PADDING} from '../../constants/theme';
 import {ICONS} from '../../constants/Icons';
 import {defaultStyles} from '../../constants/Styles';
 import ButtonWrapper from '../../components/ButtonWrapper';
 import ImagePicker from 'react-native-image-crop-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch, useSelector} from 'react-redux';
-import {register, UpdateProfile} from '../../reduxSlice/apiSlice';
-
-import ReactNativeBlobUtil from 'react-native-blob-util';
+import {UpdateProfile} from '../../reduxSlice/apiSlice';
 import ScreenLoading from '../../components/ScreenLoading';
-import {setProfile} from '../../reduxSlice/profileSlice';
 
 const UploadImage = () => {
   const profileData = useSelector(state => state.profile);
@@ -38,7 +34,6 @@ const UploadImage = () => {
     profileData?.user_profile?.profile_image || null,
   );
   const [arrayImage, setArrayImage] = useState(profileData?.gallery || []);
-  const [active, setActive] = useState(0);
   const dispatch = useDispatch();
 
   const clickhandler = async () => {
@@ -52,27 +47,30 @@ const UploadImage = () => {
   };
 
   const onCamera = type => {
-    setTimeout(() => {
-      ImagePicker.openCamera({
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        cropping: true,
-        includeBase64: true,
-      }).then(image => {
-        const file = {
-          uri: image.path,
-          type: image.mime,
-          name: image.filename || `image_${Date.now()}.jpg`,
-        };
+    ImagePicker.openCamera({
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      cropping: true,
+      includeBase64: true,
+    }).then(pickedImage => {
+      const file = {
+        uri: pickedImage.path,
+        type: pickedImage.mime,
+        name: pickedImage.filename || `image_${Date.now()}.jpg`,
+      };
 
-        if (type === 0) {
-          setImageUpload(file); // for profile image
-        } else {
-          setArrayImage(prev => [...prev, file]); // for gallery images
-        }
-      });
-    }, 1000);
+      if (type === 0) {
+        setImageUpload(file); // for profile image
+      } else {
+        setArrayImage(prev => [...prev, file]); // for gallery images
+      }
+    }).catch(err => {
+      if (err.code !== 'E_PICKER_CANCELLED') {
+        console.error('Camera Error:', err);
+        Alert.alert('Camera Error', 'Unable to take picture. Please try again.');
+      }
+    });
   };
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/jfif'];
@@ -90,15 +88,15 @@ const UploadImage = () => {
       .then(images => {
         const selectedImages = Array.isArray(images) ? images : [images];
 
-        selectedImages.forEach(image => {
-          console.log('imageimage', image);
-          if (allowedTypes.includes(image.mime)) {
+        selectedImages.forEach(selectedImage => {
+          console.log('imageimage', selectedImage);
+          if (allowedTypes.includes(selectedImage.mime)) {
             const file = {
-              lastModified: image?.modificationDate,
-              size: image?.size,
-              type: image.mime,
-              name: image.filename,
-              uri: image?.path,
+              lastModified: selectedImage?.modificationDate,
+              size: selectedImage?.size,
+              type: selectedImage.mime,
+              name: selectedImage.filename,
+              uri: selectedImage?.path,
             };
             // const file = `file:/${image.path}`
             if (type === 0) {
@@ -111,7 +109,7 @@ const UploadImage = () => {
           } else {
             Alert.alert(
               'Invalid File Type',
-              `Only JPEG, PNG, and JFIF images are allowed.\n\nSelected: ${image.mime}`,
+              `Only JPEG, PNG, and JFIF images are allowed.\n\nSelected: ${selectedImage.mime}`,
             );
           }
         });
@@ -142,7 +140,7 @@ const UploadImage = () => {
           {text: 'Cancel', onPress: () => {}},
         ]);
       } catch (error) {
-        console.log('eeeeeeoeoeoeo', error);
+        console.log('Error showing image options:', error);
       }
     }
   };
@@ -151,13 +149,7 @@ const UploadImage = () => {
     try {
       setLoader(true);
       const formdata = new FormData();
-      const dave = {
-        gallery: arrayImage,
-        user_profile: {
-          profile_image: image,
-        },
-      };
-      if(typeof image != "string"){
+      if(typeof image !== "string"){
         formdata.append('profile_image', image);
       }
 
@@ -166,7 +158,7 @@ const UploadImage = () => {
           formdata.append('gallery_images[]', arrayImage[i]);
         }
       }
-      if (route.name == 'Gallery') {
+      if (route.name === 'Gallery') {
         formdata.append('is_editing', true);
       }
       console.log('formdata', formdata);
@@ -174,7 +166,7 @@ const UploadImage = () => {
       const response = await dispatch(UpdateProfile(formdata, {step: 3}));
       console.log('success--->', response);
       if (response?.status === 200) {
-        route.name == 'Gallery'
+        route.name === 'Gallery'
           ? navigation?.goBack()
           : navigation.navigate('Details');
       }
@@ -229,7 +221,7 @@ const UploadImage = () => {
   };
 
   const conactImage = path => {
-    return 'https://thecompaniondirectory.com/public/' + path;
+    return 'https://thecompaniondirectory.com/' + path;
   };
 
   return (
@@ -284,19 +276,19 @@ const UploadImage = () => {
             flexWrap: 'wrap',
             gap: 10,
           }}>
-          {[0, 1, 2, 3].map(item => {
-            return arrayImage[item] == 'undefine' ? (
-              <View style={styles.boxStyles} key={item} />
-            ) : (
+          {Array.from({ length: Math.max(4, arrayImage.length) }, (_, index) => {
+            const image = arrayImage[index];
+            return image ? (
               <Image
+                key={index}
                 source={{
-                  uri:
-                    arrayImage[item]?.uri ??
-                    conactImage(arrayImage[item]?.image),
+                  uri: image?.uri ?? conactImage(image?.image),
                 }}
                 style={styles.boxStyles}
                 resizeMode="cover"
               />
+            ) : (
+              <View style={styles.boxStyles} key={index} />
             );
           })}
         </View>

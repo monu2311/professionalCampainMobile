@@ -2,7 +2,7 @@
  * Modern Main Screen
  * Professional companion discovery with vertical card layout and modern UI
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,7 +16,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  TextInput,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,6 +30,7 @@ import Animated, {
   FadeOut,
   SlideInDown,
   SlideOutDown,
+  runOnJS,
 } from 'react-native-reanimated';
 
 // Theme and constants
@@ -42,9 +45,13 @@ import { ICONS } from '../../constants/Icons';
 import CustomDropdown from '../../components/CustomDropdown';
 import ProfileCard from '../../components/ProfileCard';
 import Nodatafound from '../../components/Nodatafound';
+import FeaturedCarousel from '../../components/FeaturedCarousel';
+import HomeSectionWithList from '../../components/HomeSectionWithList';
+import ContentProtection from '../../components/ContentProtection';
+import { useMembershipContext } from '../../contexts/MembershipContext';
 
 // Navigation and Redux
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { getChatAllUser, getUserByID, search } from '../../reduxSlice/apiSlice';
 import { showSuccessMessage, showErrorMessage } from '../../utils/messageHelpers';
@@ -52,8 +59,10 @@ import { showSuccessMessage, showErrorMessage } from '../../utils/messageHelpers
 // Form handling
 import { Formik } from 'formik';
 import { ActivityIndicator } from 'react-native-paper';
+import { fetchProfile } from '../../apiConfig/Services';
+import membershipService from '../../services/MembershipService';
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = IOS ? 90 : 60;
 
@@ -61,49 +70,169 @@ const TAB_BAR_HEIGHT = IOS ? 90 : 60;
  * Main Component
  * Modern companion discovery screen with vertical profile cards
  */
-const Main = () => {
+const Main = memo(() => {
   const formikRef = useRef();
-  const profileData = useSelector(state => state?.profile);
-  const highlistData = useSelector(state => state?.auth?.data?.search);
+
+  // Optimized Redux selectors with memoization to prevent unnecessary re-renders
+  const profileData = useSelector(useCallback(state => state?.profile, []));
+  const highlistData = useSelector(useCallback(state => state?.auth?.data?.search, []));
+  const currentProfileData = useSelector(useCallback(state => state?.profile, []));
+
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const { forceCheckMembership } = useMembershipContext();
 
   // State management
   const [filter, setFilter] = useState({
-    suburbs: null,
+    city: null,
     category: null,
     filter_type: null,
+    page: 1,
+    page_size: 32
   });
   const [refreshing, setRefreshing] = useState(false);
   const [bookmarkedProfiles, setBookmarkedProfiles] = useState(new Set());
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [activeFilters, setActiveFilters] = useState(0);
+  const [sectionsObscured, setSectionsObscured] = useState({
+    home: false,
+    directory: false,
+  });
+  const [searchBarHidden, setSearchBarHidden] = useState(false);
+  const [isContentBlocked, setIsContentBlocked] = useState(false);
+  // Memoized data processing to prevent unnecessary re-calculations
+  const profilesData = useMemo(() => highlistData?.data?.escort?.data || [], [highlistData?.data?.escort?.data]);
+  const vipProfiles = useMemo(() => profilesData.filter(item => item?.is_vip), [profilesData]);
+  const newProfiles = useMemo(() => profilesData.slice(0, 10), [profilesData]);
+  const isLoading = useMemo(() => highlistData?.isLoading, [highlistData?.isLoading]);
 
+  // Calculate fixed header height for obscure detection
+  const HEADER_HEIGHT = useMemo(() => {
+    const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+    const headerContentHeight = 120; // Estimated height of header content + search bar
+    return statusBarHeight + headerContentHeight;
+  }, []);
+
+  // Removed debug logging to prevent excessive render cycles
   // Animation values
   const scrollY = useSharedValue(0);
 
-  // Initial data load only on component mount
+  // Declare animation styles before using them
+  const animatedSearchStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 50, 100],
+      [1, 0.5, 0],
+      'clamp'
+    );
+
+    const translateY = interpolate(
+      scrollY.value,
+      [0, 100],
+      [0, -50],
+      'clamp'
+    );
+
+    const scale = interpolate(
+      scrollY.value,
+      [0, 100],
+      [1, 0.95],
+      'clamp'
+    );
+
+    return {
+      opacity,
+      transform: [{ translateY }, { scale }],
+    };
+  });
+
+  const animatedTitleStyle = useAnimatedStyle(() => {
+    const fontSize = interpolate(
+      scrollY.value,
+      [0, 100],
+      [28, 20],
+      'clamp'
+    );
+
+    return {
+      fontSize,
+    };
+  });
+
+  const animatedSubtitleStyle = useAnimatedStyle(() => {
+    const fontSize = interpolate(
+      scrollY.value,
+      [0, 100],
+      [16, 14],
+      'clamp'
+    );
+
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 50, 100],
+      [1, 0.8, 0.7],
+      'clamp'
+    );
+
+    return {
+      fontSize,
+      opacity,
+    };
+  });
+
+  const isFocused = useIsFocused();
+
+  // Check if content should be blocked due to expired membership
   useEffect(() => {
-    // dispatch(getChatAllUser());
-    dispatch(search(filter));
-  }, [dispatch]); // Removed isFocused dependency to prevent unnecessary refetches
+    const checkContentBlock = async () => {
+      const shouldBlock = await membershipService.shouldBlockContent();
+      setIsContentBlocked(shouldBlock);
+    };
+
+    if (profileData?.user_profile) {
+      checkContentBlock();
+    }
+  }, [profileData]);
+
+  // Initial data load only on component mount
+  // useEffect(() => {
+  //   if (isFocused) {
+  //     fetchProfile(dispatch).then(() => {
+  //       setTimeout(() => {
+  //         forceCheckMembership();
+  //       }, 100);
+  //     });
+  //   }
+
+  // }, [dispatch, isFocused]); 
+  // Removed isFocused dependency to prevent unnecessary refetches
+
+  // Force membership check when profile data changes
+  // useEffect(() => {
+  //   if (currentProfileData?.user_profile && isFocused) {
+  //     console.log('Main: Profile data changed, forcing membership check');
+  //     setTimeout(() => {
+  //       forceCheckMembership();
+  //     }, 200);
+  //   }
+  // }, [currentProfileData, isFocused, forceCheckMembership]);
 
   const filterType = value => {
-    dispatch(search({...filter, filter_type: value}));
+    dispatch(search({ ...filter, filter_type: value }));
     setFilter(prev => ({
       ...prev,
       filter_type: value,
     }));
   };
   const filterLocation = value => {
-    dispatch(search({...filter, suburbs: value}));
+    dispatch(search({ ...filter, city: value }));
     setFilter(prev => ({
       ...prev,
-      suburbs: value,
+      city: value,
     }));
   };
   const filterCategory = value => {
-    dispatch(search({...filter, category: value}));
+    dispatch(search({ ...filter, category: value }));
     setFilter(prev => ({
       ...prev,
       category: value,
@@ -114,12 +243,18 @@ const Main = () => {
     formikRef.current?.setFieldValue('location', '');
     formikRef.current?.setFieldValue('category', '');
     setRefreshing(true);
+    fetchProfile(dispatch).then(() => {
+      // Force membership check after refresh
+      setTimeout(() => {
+        forceCheckMembership();
+      }, 100);
+    });
     dispatch(getChatAllUser());
-    dispatch(search({}));
+    dispatch(search({page:1,page_size:32}));
     // Replace this with your data reloading logic
     setTimeout(() => {
       setFilter({
-        suburbs: null,
+        city: null,
         category: null,
         filter_type: null,
       });
@@ -128,43 +263,59 @@ const Main = () => {
   }, [dispatch]);
 
   /**
-   * Handle scroll animation
+   * Handle scroll animation and section obscure detection
    */
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
 
-      // Scroll handling
+      // Calculate which sections are behind the fixed header
+      const scrollOffset = event.contentOffset.y;
+
+      // Check if search bar is significantly faded (opacity < 0.5 means non-interactive)
+      const searchBarHiddenState = scrollOffset >= 50; // When opacity reaches 0.5 or lower
+
+      // Estimate section positions (these would ideally be measured dynamically)
+      const homeSectionTop = 50;  // Distance from content top to Home section
+      const directorySectionTop = 300; // Distance from content top to Directory section
+
+      // Check if section headers are behind the fixed header
+      const homeObscured = scrollOffset > (homeSectionTop - HEADER_HEIGHT + 60);
+      const directoryObscured = scrollOffset > (directorySectionTop - HEADER_HEIGHT + 60);
+
+      // Update state on main thread (throttled to every 10px scroll)
+      if (Math.floor(scrollOffset) % 10 === 0) {
+        runOnJS(setSectionsObscured)({
+          home: homeObscured,
+          directory: directoryObscured
+        });
+        runOnJS(setSearchBarHidden)(searchBarHiddenState);
+      }
     },
   });
 
   /**
    * Animated header style
    */
+  // Animated header container style
   const animatedHeaderStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
+    const height = interpolate(
       scrollY.value,
-      [0, 100, 200],
-      [1, 0.8, 0.6]
-    );
-
-    const translateY = interpolate(
-      scrollY.value,
-      [0, 200],
-      [0, -50]
+      [0, 100],
+      [180, 100],
+      'clamp'
     );
 
     return {
-      opacity,
-      transform: [{ translateY }],
+      height,
     };
   });
 
 
   /**
-   * Navigate to profile detail
+   * Navigate to profile detail - Memoized for performance
    */
-  const handleViewProfile = async (profile) => {
+  const handleViewProfile = useCallback(async (profile) => {
     try {
       console.log('Navigating to profile:', profile.userId || profile.id);
 
@@ -175,7 +326,7 @@ const Main = () => {
       });
 
       // Optionally, still dispatch the action for data loading
-      dispatch(getUserByID(profile.userId || profile.id));
+      // dispatch(getUserByID(profile.userId || profile.id));
     } catch (error) {
       console.error('Navigation error:', error);
       showErrorMessage(
@@ -183,12 +334,12 @@ const Main = () => {
         'Unable to open profile. Please try again.'
       );
     }
-  };
+  }, [navigation, dispatch]);
 
   /**
-   * Handle bookmark toggle
+   * Handle bookmark toggle - Memoized for performance
    */
-  const handleBookmarkToggle = (profile) => {
+  const handleBookmarkToggle = useCallback((profile) => {
     const profileId = profile.userId || profile.id;
     const newBookmarks = new Set(bookmarkedProfiles);
 
@@ -201,7 +352,7 @@ const Main = () => {
     }
 
     setBookmarkedProfiles(newBookmarks);
-  };
+  }, [bookmarkedProfiles]);
 
   /**
    * Render profile card item
@@ -221,7 +372,7 @@ const Main = () => {
    */
   const renderEmptyState = () => (
     <View style={styles.emptyStateContainer}>
-      {highlistData?.isLoading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.specialTextColor} />
           <Text style={styles.loadingText}>Finding amazing people...</Text>
@@ -237,7 +388,7 @@ const Main = () => {
    */
   const countActiveFilters = useCallback(() => {
     let count = 0;
-    if (filter.suburbs) count++;
+    if (filter.city) count++;
     if (filter.category) count++;
     if (filter.filter_type) count++;
     setActiveFilters(count);
@@ -260,7 +411,7 @@ const Main = () => {
    */
   const clearFilters = () => {
     setFilter({
-      suburbs: null,
+      city: null,
       category: null,
       filter_type: null,
     });
@@ -278,70 +429,171 @@ const Main = () => {
         translucent={false}
       />
 
-      {/* Minimal Header */}
-      <Animated.View style={[styles.headerContainer, animatedHeaderStyle]}>
-        <View style={styles.headerContent}>
-          <View style={styles.locationContainer}>
-            <Image source={ICONS.LOCATION} style={styles.locationIcon} />
-            <Text style={styles.locationText}>
-              {filter.suburbs || 'All Locations'}
-            </Text>
+      <ContentProtection style={styles.container}>
+
+        {/* Fixed Header - Outside ScrollView */}
+        <Animated.View style={[styles.headerContainer, animatedHeaderStyle]}>
+          <View style={styles.headerTop}>
+            <View style={styles.welcomeSection}>
+              <Animated.Text style={[styles.welcomeTitle, animatedTitleStyle]}>
+                Welcome to
+              </Animated.Text>
+              <Animated.Text style={[styles.welcomeSubtitle, animatedSubtitleStyle]}>
+                Want some company?
+              </Animated.Text>
+            </View>
+            <Pressable style={styles.avatarContainer}>
+              <Image
+                source={profileData?.user?.profile_image
+                  ? { uri: profileData.user.profile_image }
+                  : ICONS.PROFILE}
+                style={styles.avatarImage}
+              />
+            </Pressable>
           </View>
-          <Text style={styles.countText}>
-            {highlistData?.data?.escort?.length || 0} Active
-          </Text>
-        </View>
-      </Animated.View>
 
-
-      {/* Main Content - Profile List */}
-      <AnimatedFlatList
-        data={highlistData?.data?.escort || []}
-        renderItem={renderProfileCard}
-        keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.specialTextColor}
-            colors={[COLORS.specialTextColor]}
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={10}
-        removeClippedSubviews={true}
-        getItemLayout={(_, index) => ({
-          length: 500, // Approximate card height
-          offset: 500 * index,
-          index,
-        })}
-      />
-
-
-      {/* Custom Filter Modal */}
-      {showFilterModal && (
-        <>
-          <Animated.View
-            style={styles.modalBackdrop}
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
+          {/* Frosted Glass Search Bar */}
+          <Pressable
+            onPress={!searchBarHidden ? () =>
+              navigation.navigate('FeaturedListPage', {
+                title: 'Home',
+                data: profilesData,
+              }) : null
+            }
+            disabled={searchBarHidden}
+            pointerEvents={searchBarHidden ? 'none' : 'auto'}
           >
-            <Pressable
-              style={styles.backdropPressable}
-              onPress={() => setShowFilterModal(false)}
+            <Animated.View style={[styles.searchContainer, animatedSearchStyle]}>
+              <View style={styles.searchBar}>
+                <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
+                <TextInput
+                  placeholder="Where do we go?"
+                  placeholderTextColor="#666"
+                  style={styles.searchInput}
+                  editable={false}
+                  pointerEvents="none"
+                  onFocus={() => console.log('Search focused')}
+                />
+              </View>
+            </Animated.View>
+          </Pressable>
+        </Animated.View>
+
+        <AnimatedScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: PADDING.large + 20 }}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.white}
+              colors={[COLORS.specialTextColor]}
+              progressViewOffset={170}
             />
-          </Animated.View>
-          <Animated.View
-            style={styles.modalContent}
-            entering={SlideInDown.duration(300).springify()}
-            exiting={SlideOutDown.duration(250)}
-          >
+          }
+        >
+          {/* White Content Container with Rounded Top */}
+          <View style={styles.contentContainer}>
+
+            {/* Featured Carousel - Modern Glassmorphic Design */}
+            {/* <FeaturedCarousel
+              onUserPress={handleViewProfile}
+            /> */}
+
+            {/* Featured Section with Horizontal ProfileCards */}
+            <HomeSectionWithList
+              title="Home"
+              subtitle="Discover amazing people"
+              data={profilesData}
+              onViewProfile={handleViewProfile}
+              onBookmark={handleBookmarkToggle}
+              bookmarkedProfiles={bookmarkedProfiles}
+              navigateTo="FeaturedListPage"
+            />
+
+            <HomeSectionWithList
+              title="Directory"
+              subtitle="Discover amazing people"
+              data={profilesData}
+              onViewProfile={handleViewProfile}
+              onBookmark={handleBookmarkToggle}
+              bookmarkedProfiles={bookmarkedProfiles}
+              navigateTo="FeaturedListPage"
+              contentStyle={{ paddingBottom: PADDING.xlarge + 100 }}
+            />
+
+            {/* VIP Section with Horizontal ProfileCards */}
+            {/* <HomeSectionWithList
+          title="VIP Members"
+          subtitle="Premium profiles"
+          data={vipProfiles}
+          onViewProfile={handleViewProfile}
+          onBookmark={handleBookmarkToggle}
+          bookmarkedProfiles={bookmarkedProfiles}
+          navigateTo="FeaturedListPage"
+          navigationParams={{ title: 'VIP Members' }}
+        /> */}
+
+            {/* New Members Section */}
+            {/* <HomeSectionWithList
+          title="New Members"
+          subtitle="Recently joined"
+          data={newProfiles}
+          onViewProfile={handleViewProfile}
+          onBookmark={handleBookmarkToggle}
+          bookmarkedProfiles={bookmarkedProfiles}
+          navigateTo="FeaturedListPage"
+          navigationParams={{ title: 'New Members' }}
+        /> */}
+
+            {/* Main Content Section Header */}
+            {/* <View style={styles.sectionHeaderContainer}>
+          <Text style={styles.sectionTitle}>All Profiles</Text>
+          <Text style={styles.sectionSubtitle}>
+            {profilesData?.length || 0} profiles available
+          </Text>
+        </View> */}
+
+            {/* Main Content - Profile List */}
+            {/* <View style={styles.profileListContainer}>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={COLORS.specialTextColor} />
+              <Text style={styles.loadingText}>Finding amazing people...</Text>
+            </View>
+          ) : profilesData?.length > 0 ? (
+            profilesData.map((item, index) => (
+              renderProfileCard({ item, index })
+            ))
+          ) : (
+            <Nodatafound />
+          )}
+        </View> */}
+          </View>
+        </AnimatedScrollView>
+
+
+        {/* Custom Filter Modal */}
+        {showFilterModal && (
+          <>
+            <Animated.View
+              style={styles.modalBackdrop}
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+            >
+              <Pressable
+                style={styles.backdropPressable}
+                onPress={() => setShowFilterModal(false)}
+              />
+            </Animated.View>
+            <Animated.View
+              style={styles.modalContent}
+              entering={SlideInDown.duration(300).springify()}
+              exiting={SlideOutDown.duration(250)}
+            >
               {/* Modal Header */}
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Filters</Text>
@@ -353,8 +605,8 @@ const Main = () => {
               <ScrollView style={styles.modalBody}>
                 <Formik
                   innerRef={formikRef}
-                  initialValues={{ location: filter.suburbs, category: filter.category }}
-                  onSubmit={() => {}}
+                  initialValues={{ location: filter.city, category: filter.category }}
+                  onSubmit={() => { }}
                 >
                   {() => (
                     <>
@@ -417,13 +669,13 @@ const Main = () => {
                           <TouchableOpacity
                             style={[
                               styles.filterChip,
-                              filter.filter_type === 'is_vip' && styles.filterChipActiveVIP
+                              filter.filter_type === 'vip' && styles.filterChipActiveVIP
                             ]}
-                            onPress={() => filterType('is_vip')}
+                            onPress={() => filterType('vip')}
                           >
                             <Text style={[
                               styles.filterChipText,
-                              filter.filter_type === 'is_vip' && styles.filterChipTextActiveVIP
+                              filter.filter_type === 'vip' && styles.filterChipTextActiveVIP
                             ]}>VIP Members</Text>
                           </TouchableOpacity>
                         </View>
@@ -448,12 +700,12 @@ const Main = () => {
                   <Text style={styles.applyButtonText}>Apply Filters</Text>
                 </TouchableOpacity>
               </View>
-          </Animated.View>
-        </>
-      )}
+            </Animated.View>
+          </>
+        )}
 
-      {/* Styled Filter Button */}
-      <View style={{
+        {/* Styled Filter Button */}
+        {/* <View style={{
         position: 'absolute',
         bottom: 100,
         right: 20,
@@ -513,62 +765,166 @@ const Main = () => {
             </View>
           )}
         </TouchableOpacity>
-      </View>
+      </View> */}
 
+      </ContentProtection>
+
+      {/* Content Blocking Overlay for Expired Members */}
+      {/* {isContentBlocked && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <View style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 99998,
+            elevation: 998,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <View style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 30,
+              borderRadius: 20,
+              alignItems: 'center',
+              marginHorizontal: 20,
+            }}>
+              <Icon name="lock" size={60} color={COLORS.white} style={{ marginBottom: 20 }} />
+              <Text style={{
+                fontSize: 20,
+                fontFamily: TYPOGRAPHY.QUICKBLOD,
+                color: COLORS.white,
+                textAlign: 'center',
+                marginBottom: 10,
+              }}>
+                Content Locked
+              </Text>
+              <Text style={{
+                fontSize: 16,
+                fontFamily: TYPOGRAPHY.QUICKREGULAR,
+                color: COLORS.white,
+                textAlign: 'center',
+                opacity: 0.9,
+              }}>
+                Your membership has expired. Please renew to continue.
+              </Text>
+            </View>
+          </View>
+        </View>
+      )} */}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#2e3094',
+    // backgroundColor:COLORS.white
   },
-  headerContainer: {
-    paddingHorizontal: PADDING.medium,
-    paddingVertical: 12,
+  scrollView: {
+    flex: 1,
+    // paddingBottom:PADDING.large
+  },
+  contentContainer: {
     backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: 180,
+    minHeight: SCREEN_HEIGHT - 140,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
       },
       android: {
-        elevation: 2,
+        elevation: 10,
       },
     }),
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 10,
+    // zIndex:11
   },
-  
-  headerContent: {
+  profileListContainer: {
+    paddingHorizontal: PADDING.small,
+  },
+  headerContainer: {
+    backgroundColor: '#2e3094',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: PADDING.large,
+    paddingTop: PADDING.medium,
+    paddingBottom: PADDING.small,
   },
-  locationContainer: {
+  welcomeSection: {
+    flex: 1,
+  },
+  welcomeTitle: {
+    fontFamily: TYPOGRAPHY.QUICKREGULAR,
+    fontWeight: '700',
+    color: COLORS.white,
+    marginBottom: 4,
+  },
+  welcomeSubtitle: {
+    fontFamily: TYPOGRAPHY.QUICKREGULAR,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  searchContainer: {
+    paddingHorizontal: PADDING.large,
+    paddingBottom: 20,
+    paddingTop: PADDING.small,
+  },
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 25,
+    height: 50,
+    paddingHorizontal: PADDING.medium,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  locationIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 6,
-    tintColor: COLORS.specialTextColor,
+  searchIcon: {
+    marginRight: 10,
   },
-  locationText: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.QUICKBLOD,
-    color: COLORS.textColor,
-    fontWeight: '600',
-  },
-  countText: {
-    fontSize: 14,
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
     fontFamily: TYPOGRAPHY.QUICKREGULAR,
-    color: COLORS.placeHolderColor,
+    color: '#333',
   },
   modalBackdrop: {
     position: 'absolute',
@@ -736,6 +1092,23 @@ const styles = StyleSheet.create({
     color: COLORS.textColor,
     marginTop: PADDING.medium,
     textAlign: 'center',
+  },
+  sectionHeaderContainer: {
+    paddingHorizontal: PADDING.large,
+    paddingTop: PADDING.large,
+    paddingBottom: PADDING.small,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontFamily: TYPOGRAPHY.QUICKBLOD,
+    fontWeight: '700',
+    color: COLORS.textColor,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.QUICKREGULAR,
+    color: COLORS.placeHolderColor,
   },
 });
 

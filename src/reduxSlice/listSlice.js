@@ -104,6 +104,9 @@ const initialState = {
       {item: 'Doctorate', value: 'Doctorate'},
     ],
   },
+  Countries: {
+    array: [],
+  },
 };
 
 const listSlice = createSlice({

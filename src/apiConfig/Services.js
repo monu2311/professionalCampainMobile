@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {setProfile} from '../reduxSlice/profileSlice';
 import {getUserByID} from '../reduxSlice/apiSlice';
 import {setFaq} from '../reduxSlice/faqSlice';
+import { storeUserData, storeMembershipStatus } from '../utils/authHelpers';
+import membershipService from '../services/MembershipService';
 
 export const fetchAllAPIs = async dispatch => {
   const baseURL = 'https://thecompaniondirectory.com/api';
@@ -18,6 +20,8 @@ export const fetchAllAPIs = async dispatch => {
     '/body-types',
     '/dress-sizes',
     '/busts',
+    '/countries',
+    // '/cities',
   ];
 
   const keyMap = {
@@ -29,6 +33,8 @@ export const fetchAllAPIs = async dispatch => {
     '/body-types': 'Body Type',
     '/dress-sizes': 'Dress Size',
     '/busts': 'Bust (optional- for search page)',
+    '/countries': 'Countries',
+    // '/cities': 'Cities',
   };
 
   try {
@@ -39,6 +45,7 @@ export const fetchAllAPIs = async dispatch => {
       ), // Catch each error individually
     );
 
+    console.log('API Responses:', responses);
     // Check for any errors
     const hasError = responses.some(
       res => res instanceof Error || res.status < 200 || res.status >= 300,
@@ -56,7 +63,8 @@ export const fetchAllAPIs = async dispatch => {
     // Extract the data from each response and store it in an object with mapped keys
     const allData = responses.reduce((acc, res, idx) => {
       const endpoint = endpoints[idx];
-      const key = keyMap[endpoint];
+      const key = keyMap[endpoint]; 
+      console.log(`Processing ${key}:`, res.data);
 
       if (key == 'Services') {
         acc['Services'] = {
@@ -80,7 +88,28 @@ export const fetchAllAPIs = async dispatch => {
             eventDiscription: item?.description,
           })),
         };
-      } else {
+      } else if(key == 'Countries'){ 
+        // console.log("res?.data?.data",res?.data?.data)
+        acc[key] = {
+          array: res?.data?.data.map(item => ({
+            item:
+              item?.name ||
+              item?.label ||
+              item?.title ||
+              item?.body_type ||
+              item?.dress_size ||
+              item?.eyes ||
+              item?.hair_color ||
+              item?.bust ||
+              item?.service ||
+              item?.category ||
+              item?.hair_style,
+            value:
+              item?.id?.toString() || item?.value || item?.name || item?.label || item?.id?.toString(),
+          })),
+        };
+      }
+      else {
         acc[key] = {
           array: res.data.map(item => ({
             item:
@@ -100,6 +129,8 @@ export const fetchAllAPIs = async dispatch => {
           })),
         };
       }
+
+      console.log(`Processed ${key}:`, acc[key]);
 
       return acc;
     }, {});
@@ -138,6 +169,7 @@ export const fetchPlans = async dispatch => {
 export const fetchProfile = async dispatch => {
   const baseURL = 'https://thecompaniondirectory.com/api/profile-detail';
   const token = await AsyncStorage.getItem('ChapToken');
+  console.log("Token--->",token)
   try {
     const response = await axios({
       method: 'get',
@@ -146,14 +178,58 @@ export const fetchProfile = async dispatch => {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log("response",response)
     const {data, success} = response?.data;
+
+    
+    // console.log("datadata",response)
     if (response?.data && success == true) {
+      console.log("response.data.data",response.data.data)
+      // Store comprehensive user data for navigation including membership fields
+      await storeUserData({
+        profile_type: response?.data?.data?.user_profile?.profile_type,
+        has_active_membership: response?.data?.data?.has_active_membership,
+        is_user_can_logged_in: response?.data?.data?.is_user_can_logged_in,
+        is_plan_purchased: response?.data?.data?.is_plan_purchased,
+        account_step: response?.data?.data?.user_profile?.account_step,
+        status: response?.data?.data?.user_profile?.status,
+        user_id: response?.data?.data?.user_profile?.user_id,
+        email: response?.data?.data?.user_profile?.email,
+        user_name: response?.data?.data?.user_profile?.user_name,
+        ...response?.data?.data?.user_profile
+      });
+
+      // Also update account step separately
+      if (response?.data?.data?.user_profile?.account_step) {
+        await AsyncStorage.setItem('account_step', String(response?.data?.data?.user_profile?.account_step));
+      }
+      console.log('fetchProfile: Storing profile data:', {
+        profile_type: response?.data?.data?.user_profile?.profile_type,
+        has_active_membership: response?.data?.data?.has_active_membership,
+        is_user_can_logged_in: response?.data?.data?.is_user_can_logged_in,
+        fullData: response?.data?.data
+      });
       dispatch(setProfile({...response?.data?.data}));
-      dispatch(getUserByID(response?.data?.data?.user_profile?.user_id));
+      // dispatch(getUserByID(response?.data?.data?.user_profile?.user_id));
+
+      // Initialize membership service
+      await membershipService.initialize(response?.data?.data);
+
+      // Store membership status
+      await storeMembershipStatus({
+        has_active_membership: response?.data?.data?.has_active_membership,
+        is_user_can_logged_in: response?.data?.data?.is_user_can_logged_in,
+        profile_type: response?.data?.data?.user_profile?.profile_type,
+      });
+
+      // Return the data for promise chaining
+      return response?.data?.data;
     }
+    return null;
   } catch (error) {
     // dispatch(setPlans({ planManagemetData: [] }))
-    // console.log(error, 'fetchProfile error');
+    console.log(error, 'fetchProfile error');
+    throw error;
   }
 };
 
@@ -175,6 +251,35 @@ export const fetchFaQ = async dispatch => {
   } catch (error) {
     // dispatch(setPlans({ planManagemetData: [] }))
     // console.log(error, 'fetchFaQ error');
+  }
+};
+
+export const updatePersonalDetails = async (personalData) => {
+  const baseURL = 'https://thecompaniondirectory.com/api/update-personal-details';
+  const token = await AsyncStorage.getItem('ChapToken');
+
+  try {
+    const response = await axios({
+      method: 'post',
+      url: baseURL,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: personalData,
+    });
+
+    if (response?.data?.status) {
+      return { success: true, data: response?.data };
+    }
+    // console.error('Update failed:', response?.data);s
+    // return { success: false, error: 'Update failed' };
+  } catch (error) {
+    console.error('Error updating personal details:', error);
+    return {
+      success: false,
+      error: error?.response?.data?.message || 'Failed to update personal details'
+    };
   }
 };
 

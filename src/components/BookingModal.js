@@ -16,11 +16,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {Calendar} from 'react-native-calendars';
 import {Picker} from '@react-native-picker/picker';
 import LinearGradient from 'react-native-linear-gradient';
 import moment from 'moment';
 import {COLORS} from '../constants/theme';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {AvailabilityUtils} from '../utils/AvailabilityUtils';
 
 const {width, height} = Dimensions.get('window');
 
@@ -29,14 +31,133 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(height)).current;
 
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
+  const [showCalendar, setShowCalendar] = useState(false);
   const [startTime, setStartTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [duration, setDuration] = useState('60');
   const [serviceType, setServiceType] = useState('outcall');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+
+  const availability = companionData?.availability || [];
+
+  const generateMarkedDates = () => {
+    const marked = {};
+    const today = moment();
+    const oneMonthLater = moment().add(1, 'month');
+
+    console.log('Companion Data:', companionData);
+    console.log('Availability:', availability);
+
+    let current = today.clone();
+    while (current.isSameOrBefore(oneMonthLater, 'day')) {
+      const dateStr = current.format('YYYY-MM-DD');
+      const status = AvailabilityUtils.getDateStatus(current, availability);
+
+      console.log(`Date: ${dateStr}, Status: ${status}`);
+
+      let markingStyle = {};
+
+      switch (status) {
+        case 'past':
+          markingStyle = {
+            disabled: true,
+            disableTouchEvent: true,
+            customStyles: {
+              container: {
+                backgroundColor: '#e5e7eb',
+                borderRadius: 16,
+              },
+              text: {
+                color: '#9ca3af',
+                fontWeight: '400'
+              }
+            }
+          };
+          break;
+        case 'unavailable':
+        case 'blocked':
+        case 'no_time_left':
+          markingStyle = {
+            disabled: true,
+            disableTouchEvent: true,
+            customStyles: {
+              container: {
+                backgroundColor: '#fecaca',
+                borderRadius: 16,
+              },
+              text: {
+                color: '#dc2626',
+                fontWeight: '500'
+              }
+            }
+          };
+          break;
+        case 'available_today':
+        case 'available':
+          markingStyle = {
+            disabled: false,
+            disableTouchEvent: false,
+            customStyles: {
+              container: {
+                backgroundColor: '#bbf7d0',
+                borderRadius: 16,
+              },
+              text: {
+                color: '#16a34a',
+                fontWeight: '600'
+              }
+            }
+          };
+          break;
+        default:
+          markingStyle = {
+            disabled: true,
+            disableTouchEvent: true,
+            customStyles: {
+              container: {
+                backgroundColor: '#f3f4f6',
+                borderRadius: 16,
+              },
+              text: {
+                color: '#6b7280',
+                fontWeight: '400'
+              }
+            }
+          };
+      }
+
+      if (current.isAfter(oneMonthLater, 'day')) {
+        markingStyle = {
+          disabled: true,
+          disableTouchEvent: true,
+          customStyles: {
+            container: {
+              backgroundColor: '#f9fafb',
+              borderRadius: 16,
+            },
+            text: {
+              color: '#9ca3af',
+              fontWeight: '300'
+            }
+          }
+        };
+      }
+
+      if (dateStr === date) {
+        markingStyle.selected = true;
+        markingStyle.customStyles.container.backgroundColor = COLORS.specialTextColor;
+        markingStyle.customStyles.text.color = '#ffffff';
+        markingStyle.customStyles.text.fontWeight = 'bold';
+      }
+
+      marked[dateStr] = markingStyle;
+      current.add(1, 'day');
+    }
+
+    return marked;
+  };
 
   useEffect(() => {
     if (visible) {
@@ -73,7 +194,7 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
     const bookingData = {
       companionId: companionData?.id,
       companionName: companionData?.name,
-      date: moment(date).format('YYYY-MM-DD'),
+      date: date,
       startTime: moment(startTime).format('HH:mm'),
       duration,
       serviceType,
@@ -82,15 +203,48 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
+
+    const validation = AvailabilityUtils.validateBooking(
+      {
+        date,
+        startTime: moment(startTime).format('HH:mm'),
+        duration
+      },
+      availability
+    );
+
+    if (!validation.isValid) {
+      alert('Booking Error: ' + validation.errors.join(', '));
+      return;
+    }
+
     onSubmit(bookingData);
     onClose();
   };
 
-  const onDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
+  const onDateSelect = (day) => {
+    const selectedDate = moment(day.dateString);
+    const today = moment();
+    const oneMonthLater = moment().add(1, 'month');
+
+    if (selectedDate.isBefore(today, 'day')) {
+      alert('Cannot select past dates');
+      return;
     }
+
+    if (selectedDate.isAfter(oneMonthLater, 'day')) {
+      alert('Cannot book more than 1 month in advance');
+      return;
+    }
+
+    const status = AvailabilityUtils.getDateStatus(selectedDate, availability);
+    if (status === 'unavailable' || status === 'blocked' || status === 'no_time_left') {
+      alert('This date is not available for booking');
+      return;
+    }
+
+    setDate(day.dateString);
+    setShowCalendar(false);
   };
 
   const onTimeChange = (event, selectedTime) => {
@@ -105,10 +259,11 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
       transparent
       visible={visible}
       animationType="none"
+      statusBarTranslucent={true}
       onRequestClose={onClose}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor="transparent"
+        backgroundColor="rgba(0,0,0,0.7)"
         translucent={true}
       />
       <KeyboardAvoidingView
@@ -119,7 +274,6 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
             styles.backdrop,
             {
               opacity: fadeAnim,
-              top: -insets.top - 50, // Ensure full coverage including status bar
             },
           ]}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
@@ -164,13 +318,73 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
               <Text style={styles.label}>Date</Text>
               <TouchableOpacity
                 style={styles.input}
-                onPress={() => setShowDatePicker(true)}>
+                onPress={() => setShowCalendar(true)}>
                 <Text style={styles.inputText}>
                   {moment(date).format('MMMM DD, YYYY')}
                 </Text>
                 <Icon name="calendar-today" size={20} color={COLORS.placeHolderColor} />
               </TouchableOpacity>
             </View>
+
+            {showCalendar && (
+              <View style={styles.calendarSection}>
+                <View style={styles.calendarHeader}>
+                  <Text style={styles.calendarTitle}>Select Date</Text>
+                  <TouchableOpacity onPress={() => setShowCalendar(false)}>
+                    <Icon name="close" size={24} color={COLORS.textColor} />
+                  </TouchableOpacity>
+                </View>
+                <Calendar
+                  current={date}
+                  minDate={moment().format('YYYY-MM-DD')}
+                  maxDate={moment().add(1, 'month').format('YYYY-MM-DD')}
+                  onDayPress={onDateSelect}
+                  monthFormat={'MMMM yyyy'}
+                  markingType={'custom'}
+                  markedDates={generateMarkedDates()}
+                  disableAllTouchEventsForDisabledDays={true}
+                  enableSwipeMonths={true}
+                  theme={{
+                    backgroundColor: '#ffffff',
+                    calendarBackground: '#ffffff',
+                    textSectionTitleColor: COLORS.textColor,
+                    selectedDayBackgroundColor: COLORS.specialTextColor,
+                    selectedDayTextColor: '#ffffff',
+                    todayTextColor: COLORS.specialTextColor,
+                    dayTextColor: COLORS.textColor,
+                    textDisabledColor: '#9ca3af',
+                    dotColor: COLORS.specialTextColor,
+                    selectedDotColor: '#ffffff',
+                    arrowColor: COLORS.specialTextColor,
+                    monthTextColor: COLORS.textColor,
+                    indicatorColor: COLORS.specialTextColor,
+                    textDayFontFamily: 'QUICKREGULAR',
+                    textMonthFontFamily: 'QUICKBLOD',
+                    textDayHeaderFontFamily: 'QUICKBLOD',
+                    textDayFontSize: 14,
+                    textMonthFontSize: 16,
+                    textDayHeaderFontSize: 12
+                  }}
+                />
+                <View style={styles.legendSection}>
+                  <Text style={styles.legendTitle}>Legend:</Text>
+                  <View style={styles.legendContainer}>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendColor, {backgroundColor: '#bbf7d0'}]} />
+                      <Text style={styles.legendText}>Available</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendColor, {backgroundColor: '#fecaca'}]} />
+                      <Text style={styles.legendText}>Unavailable</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendColor, {backgroundColor: '#e5e7eb'}]} />
+                      <Text style={styles.legendText}>Past/Blocked</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
 
             <View style={styles.row}>
               <View style={[styles.formSection, {flex: 1, marginRight: 8}]}>
@@ -205,9 +419,9 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
                   selectedValue={serviceType}
                   onValueChange={setServiceType}
                   style={styles.picker}>
-                  <Picker.Item label="Outcall" value="outcall" />
-                  <Picker.Item label="Incall" value="incall" />
-                  <Picker.Item label="Virtual" value="virtual" />
+                  <Picker.Item label="Outcall" value="outcall" color={COLORS.textColor} />
+                  <Picker.Item label="Incall" value="incall" color={COLORS.textColor} />
+                  <Picker.Item label="Virtual" value="virtual" color={COLORS.textColor} />
                 </Picker>
               </View>
             </View>
@@ -271,15 +485,6 @@ const BookingModal = ({visible, onClose, companionData, onSubmit}) => {
           </ScrollView>
         </Animated.View>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={onDateChange}
-            minimumDate={new Date()}
-          />
-        )}
 
         {showTimePicker && (
           <DateTimePicker
@@ -300,7 +505,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: -100,
+    left: 0,
+    right: 0,
+    bottom: -100,
     backgroundColor: 'rgba(0,0,0,0.7)',
   },
   modalContent: {
@@ -407,12 +616,74 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
+    color: COLORS.textColor,
+    backgroundColor: 'transparent',
   },
   locationNote: {
     fontSize: 12,
     fontFamily: 'QUICKREGULAR',
     color: '#ff9800',
     marginTop: 5,
+  },
+  calendarSection: {
+    marginBottom: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  calendarTitle: {
+    fontSize: 18,
+    fontFamily: 'QUICKBLOD',
+    color: COLORS.textColor,
+  },
+  legendSection: {
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  legendTitle: {
+    fontSize: 14,
+    fontFamily: 'QUICKBLOD',
+    color: COLORS.textColor,
+    marginBottom: 8,
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  legendText: {
+    fontSize: 12,
+    fontFamily: 'QUICKREGULAR',
+    color: COLORS.textColor,
   },
   buttonContainer: {
     flexDirection: 'row',

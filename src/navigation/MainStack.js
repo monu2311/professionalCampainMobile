@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
@@ -29,14 +29,28 @@ import ChatRequestList from '../screens/MessageFlow/ChatRequestList';
 import ChangePassword from '../screens/Setting/ChangePassword';
 import Enquriries from '../screens/Setting/Enquriries';
 import AboutUs from '../screens/Setting/AboutUs';
+import HelpSupport from '../screens/Setting/HelpSupport';
 import AdvertisingRate from '../screens/Setting/AdvertisingRate';
 import Setting from '../screens/Setting/Setting';
 import Subscription from '../screens/SubScriptionFlow/Subscription';
 import SplashScreen from '../screens/SplashFlow/SplashScreen';
 import Service from '../screens/ServiceFlow/Service';
 import PayPalWebView from '../screens/Payment/PayPalWebView';
+import StripePaymentScreen from '../screens/Payment/StripePaymentScreen';
 import MyBookings from '../screens/BookingFlow/MyBookings';
 import UserProfileDetail from '../screens/ProfileFlow/UserProfileDetail';
+import FeaturedListPage from '../screens/SplashFlow/FeaturedListPage';
+import SelectMethod from '../screens/LoginFlow/SelectMethod';
+import { MembershipProvider } from '../contexts/MembershipContext';
+import UserChatListEnhanced from '../screens/MessageFlow/UserChatListEnhanced';
+import MembershipPlansScreen from '../screens/SubScriptionFlow/MembershipPlansScreen';
+import TermsAndConditions from '../screens/Setting/TermsAndConditions';
+import { DdRumReactNavigationTracking } from "@datadog/mobile-react-navigation";
+import { setNavigationRef } from '../apiConfig/apicall';
+import SessionExpiredModal from '../components/SessionExpiredModal';
+import sessionManager from '../utils/sessionManager';
+import membershipService from '../services/MembershipService';
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -47,12 +61,17 @@ const Tab = createBottomTabNavigator();
 function ChatStack() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
-      <Stack.Screen
+      {/* <Stack.ScreenUserChatListEnhanced
         name="UserChatList"
         component={UserChatList}
         options={{headerShown: false}}
+      /> */}
+      <Stack.Screen
+        name="UserChatList"
+        component={UserChatListEnhanced}
+        options={{headerShown: false}}
       />
-     
+
     </Stack.Navigator>
   );
 }
@@ -70,7 +89,7 @@ function ServiceStack() {
           headerShown:false
         }}
       />
-     
+
     </Stack.Navigator>
   );
 }
@@ -118,6 +137,7 @@ function AuthStack() {
      >
       <Stack.Screen name="SplashScreen" component={SplashScreen} />
       <Stack.Screen name="GetStarted" component={GetStarted} />
+      <Stack.Screen name="SelectMethod" component={SelectMethod} />
       <Stack.Screen name="Chat" component={Chat} options={{headerShown:true}}/>
       <Stack.Screen
         name="ChatRequests"
@@ -134,6 +154,8 @@ function AuthStack() {
       <Stack.Screen name="singup" component={CreateAccount} />
       <Stack.Screen name="CreateProfile" component={CreateProfile} />
       <Stack.Screen name="SelectPlan" component={SelectPlan} />
+      <Stack.Screen name="MembershipPlansScreen" component={MembershipPlansScreen} />
+      
       <Stack.Screen
         name="Profile1"
         component={ProfileScreen}
@@ -178,6 +200,11 @@ function AuthStack() {
         name="PayPalWebView"
         component={PayPalWebView}
         options={{headerShown: true, title: 'Pay with PayPal'}}
+      />
+      <Stack.Screen
+        name="StripePaymentScreen"
+        component={StripePaymentScreen}
+        options={{headerShown: false}}
       />
 
       <Stack.Screen
@@ -253,6 +280,14 @@ function AuthStack() {
         }}
       />
        <Stack.Screen
+        name="HelpSupport"
+        component={HelpSupport}
+        options={{
+          headerShown: true,
+          header: () => <CustomHeader label="Help & Support" />,
+        }}
+      />
+       <Stack.Screen
         name="AdvertisingRate"
         component={AdvertisingRate}
         options={{
@@ -276,17 +311,93 @@ function AuthStack() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="FeaturedListPage"
+        component={FeaturedListPage}
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: '#fff',
+            elevation: 0,
+            shadowOpacity: 0,
+          },
+          headerTitleAlign: 'center',
+        }}
+      />
+      <Stack.Screen
+        name="TermsAndConditions"
+        component={TermsAndConditions}
+        options={{
+          headerShown: false,
+        }}
+      />
 
     </Stack.Navigator>
   );
 }
 
+// Navigation wrapper component with membership provider
+const NavigationWithMembership = () => {
+  return (
+    <MembershipProvider>
+      <Stack.Navigator screenOptions={{headerShown: false}}>
+        <Stack.Screen name="AuthStack" component={AuthStack} />
+        {/* <Stack.Screen name="HomeTabs" component={HomeTabs} /> */}
+      </Stack.Navigator>
+    </MembershipProvider>
+  );
+};
+
+// Wrapper component that includes session modal with navigation context
+const NavigationWithSessionModal = ({ navigationRef }) => {
+  const [sessionExpiredVisible, setSessionExpiredVisible] = useState(false);
+
+  useEffect(() => {
+    // Subscribe to session manager state changes
+    const unsubscribe = sessionManager.subscribe((state) => {
+      setSessionExpiredVisible(state.isModalVisible);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Track navigation state changes
+  useEffect(() => {
+    if (navigationRef?.current) {
+      const getCurrentRoute = () => {
+        const state = navigationRef.current?.getRootState();
+        if (!state) return '';
+
+        let route = state.routes[state.index];
+        while (route.state && route.state.index !== undefined) {
+          route = route.state.routes[route.state.index];
+        }
+        return route.name;
+      };
+
+      // Get initial route
+      const routeName = getCurrentRoute();
+      membershipService.setCurrentRoute(routeName);
+    }
+  }, [navigationRef]);
+
+  return (
+    <>
+      <NavigationWithMembership />
+      {/* Session Expired Modal - Now inside NavigationContainer with navigation context! */}
+      <SessionExpiredModal visible={sessionExpiredVisible} />
+    </>
+  );
+};
+
 export default function MainStack() {
+  const navigationRef = React.useRef(null);
+
   // Deep linking configuration
   const linking = {
     prefixes: [
       'professionalcompanionship://',
-      'https://professionalcompanionship.com',
+      'https://thecompaniondirectory.com',
       'app://',
     ],
     config: {
@@ -330,11 +441,29 @@ export default function MainStack() {
   };
 
   return (
-    <NavigationContainer linking={linking}>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
-        <Stack.Screen name="AuthStack" component={AuthStack} />
-        {/* <Stack.Screen name="HomeTabs" component={HomeTabs} /> */}
-      </Stack.Navigator>
+    <NavigationContainer
+      linking={linking}
+      ref={navigationRef}
+        onReady={() => {
+          DdRumReactNavigationTracking.startTrackingViews(navigationRef.current);
+          // Set navigation reference for API error handling
+          setNavigationRef(navigationRef.current);
+        }}
+      onStateChange={() => {
+        // Track route changes
+        if (navigationRef.current) {
+          const state = navigationRef.current.getRootState();
+          if (state) {
+            let route = state.routes[state.index];
+            while (route.state && route.state.index !== undefined) {
+              route = route.state.routes[route.state.index];
+            }
+            membershipService.setCurrentRoute(route.name);
+          }
+        }
+      }}
+>
+      <NavigationWithSessionModal navigationRef={navigationRef} />
     </NavigationContainer>
   );
 }

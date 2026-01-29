@@ -1,10 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable react-hooks/exhaustive-deps */
-import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {Text} from 'react-native-paper';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useLayoutEffect, useState, useRef } from 'react';
+import { Text } from 'react-native-paper';
 import ChatHeader from './ChatHeader';
-import {ICONS} from '../../constants/Icons';
+import { ICONS } from '../../constants/Icons';
 import {
   Alert,
   Image,
@@ -14,11 +14,12 @@ import {
   StyleSheet,
   TextInput,
   View,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import {COLORS, HEIGHT, IOS, PADDING, TYPOGRAPHY, WIDTH} from '../../constants/theme';
-import {useDispatch, useSelector} from 'react-redux';
-import {getNewMsg, sendChatMessage} from '../../reduxSlice/apiSlice';
+import { COLORS, PADDING, TYPOGRAPHY, WIDTH } from '../../constants/theme';
+import { useDispatch, useSelector } from 'react-redux';
+import { getNewMsg, sendChatMessage } from '../../reduxSlice/apiSlice';
 import moment from 'moment';
 import ImagePicker from 'react-native-image-crop-picker';
 import FastImage from 'react-native-fast-image';
@@ -26,17 +27,24 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 
 const Chat = () => {
-  const newChatMsg = useSelector(state => state?.auth?.data?.newChatMsg);
   const profileData = useSelector(state => state.profile?.user_profile);
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const route = useRoute();
-  const {userDetails, userChatHistory} = route?.params?.routeData;
+  const scrollViewRef = useRef(null);
+  const { userDetails, userChatHistory } = route?.params?.routeData || {
+    userDetails: {
+      image: "assd",
+      name: 'Ravi'
+    }
+  };
   const propfileData = {
-    image: userDetails?.image,
-    name: userDetails?.name,
+    image: userDetails?.profile_file,
+    name: userDetails?.user_name,
     lastmessage: 'omg, this is amazing',
   };
+
+  console.log("userDetails", userDetails)
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -45,14 +53,46 @@ const Chat = () => {
   }, [navigation, propfileData, userDetails]);
 
   const [chatList, steChatList] = useState(userChatHistory);
+  console.log("chatList", chatList)
   const [massage, setMassage] = useState('');
   const [file, setFile] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   const dispatch = useDispatch();
 
+  // Keyboard listeners
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        // Scroll to bottom when keyboard opens
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        // Keyboard hidden
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
   //UPLOAD IMAGES LOGICS
 
-  const onCamera = type => {
+  const onCamera = () => {
+    // Prevent if already sending
+    if (isSending) {
+      return;
+    }
+
     setTimeout(() => {
       ImagePicker.openCamera({
         width: 120,
@@ -76,7 +116,12 @@ const Chat = () => {
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/jfif'];
 
-  const onGallery = type => {
+  const onGallery = () => {
+    // Prevent if already sending
+    if (isSending) {
+      return;
+    }
+
     ImagePicker.openPicker({
       width: 120,
       height: 120,
@@ -133,7 +178,7 @@ const Chat = () => {
               onGallery();
             },
           },
-          {text: 'Cancel', onPress: () => {}},
+          { text: 'Cancel', onPress: () => { } },
         ]);
       } catch (error) {
         console.log('eeeeeeoeoeoeo', error);
@@ -144,26 +189,46 @@ const Chat = () => {
   //END
 
   const sendMessages = async () => {
-    const date = moment(new Date()).format('YYYY-DD-MM');
+    // Prevent multiple sends
+    if (isSending) {
+      return;
+    }
+
+    // Validate if there's content to send
+    const hasMessage = massage?.trim()?.length > 0;
+    const hasFile = file && (file.uri || file);
+
+    // Return early if both message and file are empty
+    if (!hasMessage && !hasFile) {
+      return;
+    }
+
+    // Set sending state
+    setIsSending(true);
+
+    const date = moment(new Date()).format('YYYY-MM-DD');
     const formData = new FormData();
 
-    if (massage?.length > 0 && massage?.trim()?.length > 0) {
-      formData.append('message', massage);
+    if (hasMessage) {
+      formData.append('message', massage.trim());
     }
-    if (file) {
+    if (hasFile) {
       formData.append('file', file);
     }
 
     const messageObj = {
-      from_id: profileData?.user_id,
-      to_id: userDetails?.id,
-      ...(massage?.trim() && {message: massage.trim()}),
-      ...(file && {file: file?.uri}), // assuming `file` is a non-null object or string
+      from_id: {
+        id: profileData?.user_id,
+      },
+      to_id: userDetails?.user_id,
+      ...(hasMessage && { message: massage.trim() }),
+      ...(hasFile && { file: file?.uri || file }),
     };
+
     try {
       const responsee = await dispatch(
         sendChatMessage({
-          id: userDetails?.id,
+          id: userDetails?.user_id,
           payloadData: formData,
         }),
       );
@@ -173,18 +238,47 @@ const Chat = () => {
           [date]: [...((prev && prev[date]) ? prev[date] : []), messageObj],
         }));
         setMassage('');
+        setFile(''); // Clear file after sending
+        // Scroll to bottom after sending
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
       }
     } catch (error) {
       console.log('error--->', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
+    } finally {
+      // Always reset sending state
+      setIsSending(false);
     }
   };
 
   useEffect(() => {
-    if (!isFocused || !userDetails?.id) {
+    if (!isFocused || !userDetails?.user_id) {
       return;
     }
-    const interval = setInterval(() => {
-      dispatch(getNewMsg(userDetails?.id));
+    const interval = setInterval(async () => {
+      const response = await dispatch(getNewMsg(userDetails?.user_id));
+      console.log("getNewMsg getNewMsg", response)
+      if (response?.message && response?.time) {
+        const date = moment(new Date()).format('YYYY-MM-DD');
+        const messageObj = {
+          from_id: {
+            id: userDetails?.user_id,
+          },
+
+          ...(response?.message?.trim() && { message: response?.message.trim() }),
+          ...(response?.file && { file: response?.file?.uri }), // assuming `file` is a non-null object or string
+
+        }
+        console.log("messageObjmessageObjmessageObj",messageObj)
+        steChatList(prev => ({
+          ...(prev || {}),
+          [date]: [...((prev && prev[date]) ? prev[date] : []), messageObj],
+        }));
+
+      };
+
     }, 15000);
     return () => clearInterval(interval);
   }, [dispatch, isFocused, userDetails?.id]);
@@ -219,11 +313,17 @@ const Chat = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive">
 
         {Object?.entries(chatList)?.map(([date, messages]) => (
           <View key={date}>
@@ -232,16 +332,19 @@ const Chat = () => {
             </View>
 
             {messages?.map((item, index) => {
-              const isFromUser = item?.from_id === profileData?.user_id;
+              const isFromUser = item?.from_id?.id === profileData?.user_id;
               return renderMessage(item, `${date}_${index}`, isFromUser);
             })}
           </View>
         ))}
       </ScrollView>
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, Platform.OS === 'android' && { paddingBottom: 20 }]}>
         <View style={styles.inputWrapper}>
-          <Pressable onPress={SelectFromGallery} style={styles.attachButton}>
-            <Icon name="attach-file" size={22} color={COLORS.specialTextColor} />
+          <Pressable
+            onPress={SelectFromGallery}
+            style={[styles.attachButton, isSending && styles.attachButtonDisabled]}
+            disabled={isSending}>
+            <Icon name="attach-file" size={22} color={isSending ? COLORS.placeHolderColor : COLORS.specialTextColor} />
           </Pressable>
 
           <TextInput
@@ -253,12 +356,15 @@ const Chat = () => {
             maxLength={1000}
           />
 
-          <Pressable onPress={sendMessages} style={styles.sendButton}>
+          <Pressable
+            onPress={sendMessages}
+            style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
+            disabled={isSending}>
             <Icon name="send" size={20} color={COLORS.white} />
           </Pressable>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -406,6 +512,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 4,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  attachButtonDisabled: {
+    opacity: 0.5,
   },
 });
 

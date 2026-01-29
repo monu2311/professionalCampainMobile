@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { Alert } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 import { login, search, getChatAllUser } from '../reduxSlice/apiSlice';
 import { fetchAllAPIs, fetchPlans, fetchProfile } from '../apiConfig/Services';
-import { handleAuthSuccess } from '../utils/authHelpers';
+import { handleAuthSuccess, storeMembershipStatus } from '../utils/authHelpers';
 import { navigatePostLogin } from '../utils/navigationHelper';
+import membershipService from '../services/MembershipService';
 import { validateForm, loginValidationSchema } from '../utils/loginValidation';
 
 /**
@@ -20,27 +21,47 @@ export const useLogin = () => {
   const navigation = useNavigation();
 
   /**
-   * Show user-friendly error message
+   * Show user-friendly error message using toast
    */
   const showErrorAlert = (title, message) => {
-    Alert.alert(
-      title || 'Login Error',
-      message || 'Please check your credentials and try again.',
-      [{ text: 'OK', style: 'default' }],
-      { cancelable: true }
-    );
+    showMessage({
+      message: title || 'Login Error',
+      description: message || 'Please check your credentials and try again.',
+      type: 'danger',
+      icon: 'danger',
+      duration: 4000,
+      floating: true,
+      titleStyle: {
+        fontSize: 16,
+        fontWeight: '600',
+      },
+      textStyle: {
+        fontSize: 14,
+        fontWeight: '400',
+      }
+    });
   };
 
   /**
-   * Show success message
+   * Show success message using toast
    */
   const showSuccessAlert = (message) => {
-    Alert.alert(
-      'Success',
-      message || 'Login successful!',
-      [{ text: 'OK', style: 'default' }],
-      { cancelable: true }
-    );
+    showMessage({
+      message: 'Success',
+      description: message || 'Login successful!',
+      type: 'success',
+      icon: 'success',
+      duration: 3000,
+      floating: true,
+      titleStyle: {
+        fontSize: 16,
+        fontWeight: '600',
+      },
+      textStyle: {
+        fontSize: 14,
+        fontWeight: '400',
+      }
+    });
   };
 
   /**
@@ -52,20 +73,31 @@ export const useLogin = () => {
     let title = 'Login Failed';
     let message = 'Please check your credentials and try again.';
 
-    if (error?.response?.status === 401) {
+    // First check if there's a direct message from the server
+    if (error?.message && typeof error.message === 'string') {
+      // This handles messages like "Password or Email is Incorrect!"
+      message = error.message;
+      title = 'Authentication Error';
+    } else if (error?.response?.status === 401) {
       title = 'Invalid Credentials';
-      message = 'The username or password you entered is incorrect.';
+      message = error?.response?.data?.message || 'The username or password you entered is incorrect.';
     } else if (error?.response?.status === 429) {
       title = 'Too Many Attempts';
       message = 'Please wait a few minutes before trying again.';
     } else if (error?.response?.status === 500) {
       title = 'Server Error';
       message = 'Our servers are experiencing issues. Please try again later.';
-    } else if (error?.code === 'NETWORK_ERROR' || !error?.response) {
+    } else if (error?.response?.data?.message) {
+      // Server provided error message
+      message = error.response.data.message;
+    } else if (error?.code === 'NETWORK_ERROR' || (!error?.response && !error?.message)) {
+      // Only show connection error if there's truly no response and no message
       title = 'Connection Error';
       message = 'Please check your internet connection and try again.';
-    } else if (error?.response?.data?.message) {
-      message = error.response.data.message;
+    } else if (!error?.response && !error?.message) {
+      // Fallback for unknown errors
+      title = 'Something went wrong';
+      message = 'An unexpected error occurred. Please try again.';
     }
 
     showErrorAlert(title, message);
@@ -82,7 +114,13 @@ export const useLogin = () => {
         fetchAllAPIs(dispatch),
         fetchPlans(dispatch),
         fetchProfile(dispatch),
-        dispatch(search({})),
+        dispatch(search({
+          city: null,
+          category: null,
+          filter_type: null,
+          page: 1,
+          page_size: 32
+        })),
         dispatch(getChatAllUser({})),
       ]);
     } catch (error) {
@@ -108,10 +146,15 @@ export const useLogin = () => {
 
       // Perform login API call
       const response = await dispatch(login(values));
+      console.log("login response",response)
 
       // Check response status
       if (response?.status !== 200) {
-        throw new Error(response?.message || 'Login failed');
+        // Create an error object with the server message
+        const error = new Error(response?.message || 'Login failed');
+        error.message = response?.message || 'Login failed';
+        error.response = response;
+        throw error;
       }
 
       // Extract data from response
@@ -126,14 +169,32 @@ export const useLogin = () => {
         throw new Error('Failed to store authentication data');
       }
 
-      // Perform post-login tasks
-      await performPostLoginTasks();
+      // Initialize membership service with login data
+      await membershipService.initialize(data.details);
 
-      // Navigate to appropriate screen
-      const navigationSuccess = navigatePostLogin(data.details, navigation);
-      if (!navigationSuccess) {
-        console.warn('Navigation failed, but login was successful');
-      }
+      // Store membership status
+      await storeMembershipStatus({
+        has_active_membership: data.details.has_active_membership,
+        is_user_can_logged_in: data.details.is_user_can_logged_in,
+        profile_type: data.details.profile_type,
+      });
+
+      // Perform post-login tasks
+       performPostLoginTasks();
+
+      // Navigate based on membership status
+      const navigationDestination = await membershipService.getNavigationDestination(
+        data.details.account_step,
+        data.details.status
+      );
+
+      // Use the navigation helper with the determined destination
+      navigation.reset({
+        index: 0,
+        routes: [{ name: navigationDestination }],
+      });
+
+      console.log('Login successful, navigating to:', navigationDestination);
 
       // Reset login attempts on success
       setLoginAttempts(0);
@@ -146,6 +207,7 @@ export const useLogin = () => {
 
     } catch (error) {
       handleLoginError(error);
+      console.log("login error",error)
       return {
         success: false,
         error: error.message || 'Login failed',

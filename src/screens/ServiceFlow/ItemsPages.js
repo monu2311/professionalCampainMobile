@@ -137,7 +137,7 @@ const ItemsPages = ({navigation, items}) => {
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionContainer}>
+        {/* <View style={styles.actionContainer}>
           <Pressable style={styles.contactButton}>
             <Icon name="message" size={20} color={COLORS.white} />
             <Text style={styles.contactButtonText}>Contact Now</Text>
@@ -147,7 +147,7 @@ const ItemsPages = ({navigation, items}) => {
             <Icon name="calendar-today" size={20} color={COLORS.white} />
             <Text style={styles.bookButtonText}>Book Service</Text>
           </Pressable>
-        </View>
+        </View> */}
       </View>
     </KeyboardAwareScrollView>
   );

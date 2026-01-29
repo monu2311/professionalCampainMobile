@@ -35,6 +35,7 @@ import ScreenLoading from '../../components/ScreenLoading';
 import ButtonWrapper from '../../components/ButtonWrapper';
 import ConfirmationBottomSheet from '../../components/ConfirmationBottomSheet';
 import ProfileScreen from '../EditProfileFlow/ProfileScreen';
+import ContentProtection from '../../components/ContentProtection';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -47,22 +48,30 @@ const BOOKING_STATUS = {
   COMPLETED: 'completed',
 };
 
-// Tab configuration
-const TABS = [
-  { key: 'received', label: 'Requests Received', icon: 'inbox' },
+// Tab configuration for Members (profile_type !== 1)
+const MEMBER_TABS = [
+  { key: 'requests', label: 'Requests', icon: 'inbox' },
   { key: 'accepted', label: 'Accepted', icon: 'check-circle' },
   { key: 'rejected', label: 'Rejected', icon: 'cancel' },
-  { key: 'cancelled', label: 'Cancelled', icon: 'block' },
+];
+
+// Tab configuration for Companions (profile_type === 1)
+const COMPANION_TABS = [
   { key: 'history', label: 'History', icon: 'history' },
+  { key: 'cancelled', label: 'Cancelled', icon: 'block' },
 ];
 
 const MyBookings = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  
-  // State management
-  const [activeTab, setActiveTab] = useState('received');
+
+  // Get user profile data first
+  const userProfile = useSelector(state => state.profile?.user_profile);
+  const isCompanion = userProfile?.profile_type === "1";
+
+  // State management - set default tab based on user type
+  const [activeTab, setActiveTab] = useState(isCompanion ? 'history' : 'requests');
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,9 +84,9 @@ const MyBookings = () => {
   const [mainTab, setMainTab] = useState('Home');
 
 
-  // Get user profile data
-  const userProfile = useSelector(state => state.profile?.user_profile);
-  const isEscort = activeTab === 'history' ? false : true;
+  // User type logic
+  const isEscort = isCompanion; // Companion is escort
+  console.log("userProfile", userProfile, "isCompanion", isCompanion);
 
   /**
    * Fetch bookings based on current tab
@@ -85,41 +94,50 @@ const MyBookings = () => {
   const fetchBookings = useCallback(async (tab = activeTab, showLoader = true) => {
     try {
       if (showLoader) setLoading(true);
-      
+
       let status = 'pending';
       // let role = isEscort ? 'escort' : 'client';
       let role = 'escort';
-      
-      // Determine status based on tab
-      switch (tab) {
-        case 'received':
-          status = 'pending';
-          break;
-        case 'accepted':
-          status = 'accepted';
-          break;
-        case 'rejected':
-          status = 'rejected';
-          break;
-        case 'cancelled':
-          status = 'cancelled';
-          break;
-        case 'history':
-          role = 'client';
-          // For history, get all bookings
-          status = null;
-          break;
-        default:
-          status = 'pending';
+
+      // Determine role and status based on user type and tab
+      if (isCompanion) {
+        // Companion (escort) role
+        role = 'escort';
+        switch (tab) {
+          case 'history':
+            // status = 'pending';
+            break;
+          case 'cancelled':
+            status = 'cancelled';
+            break;
+          default:
+            status = 'pending';
+        }
+      } else {
+        // Member (client) role
+        role = 'client';
+        switch (tab) {
+          case 'requests':
+            status = 'pending';
+            break;
+          case 'accepted':
+            status = 'accepted';
+            break;
+          case 'rejected':
+            status = 'rejected';
+            break;
+          default:
+            status = 'pending';
+        }
       }
 
       const response = await BookingService.getPendingBookings(
-        { role, status }, 
+        { role, status },
         dispatch
       );
       console.log('response', response);
       if (response.success) {
-        setBookings(response?.bookings?.data || []);
+        setBookings(response?.bookings || []);
       } else {
         throw new Error(response.message || 'Failed to fetch bookings');
       }
@@ -131,7 +149,7 @@ const MyBookings = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeTab, isEscort, dispatch]);
+  }, [activeTab, isCompanion, dispatch]);
 
   /**
    * Handle tab change
@@ -156,7 +174,8 @@ const MyBookings = () => {
     try {
       setActionLoading(true);
       const response = await BookingService.getBookingById(booking.id, dispatch);
-      
+      console.log("response response", response)
+
       if (response.success) {
         setSelectedBooking(response.booking);
         setShowBookingDetails(true);
@@ -178,12 +197,12 @@ const MyBookings = () => {
     try {
       setActionLoading(true);
       const response = await BookingService.updateBookingStatus(
-        bookingId, 
-        'accept', 
-        '', 
+        bookingId,
+        'accept',
+        '',
         dispatch
       );
-      
+
       if (response.success) {
         setShowBookingDetails(false);
         fetchBookings(activeTab, false);
@@ -206,12 +225,12 @@ const MyBookings = () => {
     try {
       setActionLoading(true);
       const response = await BookingService.updateBookingStatus(
-        bookingId, 
-        'reject', 
-        reason, 
+        bookingId,
+        'reject',
+        reason,
         dispatch
       );
-      
+
       if (response.success) {
         setShowBookingDetails(false);
         setShowRejectConfirm(false);
@@ -235,11 +254,11 @@ const MyBookings = () => {
     try {
       setActionLoading(true);
       const response = await BookingService.cancelBooking(
-        bookingId, 
-        reason, 
+        bookingId,
+        reason,
         dispatch
       );
-      
+
       if (response.success) {
         setShowBookingDetails(false);
         setShowCancelConfirm(false);
@@ -284,7 +303,7 @@ const MyBookings = () => {
    */
   const renderBookingItem = useCallback(({ item: booking }) => {
     const statusStyle = getStatusBadgeStyle(booking.status);
-    
+
     return (
       <Pressable
         style={styles.bookingCard}
@@ -308,13 +327,13 @@ const MyBookings = () => {
             </Text>
           </View>
         </View>
-        
+
         {booking.notes && (
           <Text style={styles.bookingNotes} numberOfLines={2}>
             {booking.notes}
           </Text>
         )}
-        
+
         <View style={styles.bookingActions}>
           <Text style={styles.viewDetailsText}>Tap to view details</Text>
           <Icon name="chevron-right" size={20} color={COLORS.specialTextColor} />
@@ -328,12 +347,12 @@ const MyBookings = () => {
    */
   const renderTabBar = useCallback(() => (
     <View style={styles.tabBar}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tabContainer}
       >
-        {TABS.map((tab) => (
+        {(isCompanion ? COMPANION_TABS : MEMBER_TABS).map((tab) => (
           <Pressable
             key={tab.key}
             style={[
@@ -342,10 +361,10 @@ const MyBookings = () => {
             ]}
             onPress={() => handleTabChange(tab.key)}
           >
-            <Icon 
-              name={tab.icon} 
-              size={16} 
-              color={activeTab === tab.key ? COLORS.white : COLORS.specialTextColor} 
+            <Icon
+              name={tab.icon}
+              size={16}
+              color={activeTab === tab.key ? COLORS.white : COLORS.specialTextColor}
             />
             <Text style={[
               styles.tabText,
@@ -388,30 +407,30 @@ const MyBookings = () => {
             {/* Booking Info */}
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>Booking Information</Text>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Date & Time:</Text>
                 <Text style={styles.detailValue}>{formatBookingDateTime(selectedBooking)}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Duration:</Text>
                 <Text style={styles.detailValue}>{selectedBooking.duration_minutes} minutes</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Service Type:</Text>
                 <Text style={styles.detailValue}>{selectedBooking.service_type}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Status:</Text>
                 <View style={[
-                  styles.statusBadge, 
+                  styles.statusBadge,
                   { backgroundColor: getStatusBadgeStyle(selectedBooking.status).backgroundColor }
                 ]}>
                   <Text style={[
-                    styles.statusText, 
+                    styles.statusText,
                     { color: getStatusBadgeStyle(selectedBooking.status).color }
                   ]}>
                     {selectedBooking.status?.toUpperCase()}
@@ -425,14 +444,14 @@ const MyBookings = () => {
               <Text style={styles.sectionTitle}>
                 {isEscort ? 'Client Information' : 'Escort Information'}
               </Text>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Name:</Text>
                 <Text style={styles.detailValue}>
                   {isEscort ? selectedBooking.client_name : selectedBooking.escort_name}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Contact:</Text>
                 <Text style={styles.detailValue}>
@@ -451,7 +470,7 @@ const MyBookings = () => {
           </ScrollView>
 
           {/* Action Buttons */}
-          {(canAccept || canReject || canCancel) && (
+          {(canAccept || canReject || canCancel) && !isEscort && (
             <View style={styles.modalActions}>
               {canAccept && (
                 <ButtonWrapper
@@ -460,7 +479,7 @@ const MyBookings = () => {
                   buttonMainStyle={[styles.actionButton, styles.acceptButton]}
                 />
               )}
-              
+
               {canReject && (
                 <ButtonWrapper
                   label="Reject"
@@ -468,7 +487,7 @@ const MyBookings = () => {
                   buttonMainStyle={[styles.actionButton, styles.rejectButton]}
                 />
               )}
-              
+
               {canCancel && (
                 <ButtonWrapper
                   label="Cancel Booking"
@@ -478,14 +497,21 @@ const MyBookings = () => {
               )}
             </View>
           )}
+
+          {isEscort &&
+            <ButtonWrapper
+              label="Cancel Booking"
+              onClick={() => setShowCancelConfirm(true)}
+              buttonMainStyle={[styles.actionButton, styles.acceptButton]}
+            />}
         </View>
       </Modal>
     );
   }, [
-    selectedBooking, 
-    showBookingDetails, 
-    isEscort, 
-    formatBookingDateTime, 
+    selectedBooking,
+    showBookingDetails,
+    isEscort,
+    formatBookingDateTime,
     getStatusBadgeStyle,
     handleAcceptBooking
   ]);
@@ -503,7 +529,7 @@ const MyBookings = () => {
       <Icon name="inbox" size={64} color={COLORS.placeHolderColor} />
       <Text style={styles.emptyStateTitle}>No Bookings Found</Text>
       <Text style={styles.emptyStateText}>
-        {activeTab === 'received' 
+        {activeTab === 'received'
           ? 'You have no pending booking requests'
           : `No ${activeTab} bookings to display`
         }
@@ -512,18 +538,18 @@ const MyBookings = () => {
   ), [activeTab]);
 
   return (
-    <View style={styles.container}>
+    <ContentProtection style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top,display:'flex',flexDirection:'row',justifyContent:'space-between',alignItems:'center' }]}>
-        <View style={{display:'flex'}}>
+      <View style={[styles.header, { paddingTop: insets.top, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+        <View style={{ display: 'flex' }}>
           {/* <Icon name="arrow-back" size={24} color={COLORS.textColor} /> */}
           <Text style={styles.headerTitle}>My Bookings</Text>
           <Text style={styles.headerSubtitle}>
-          {isEscort ? 'Manage your booking requests' : 'Track your booking history'}
-        </Text>
+            {isCompanion ? 'Manage your booking history' : 'Track your booking requests'}
+          </Text>
         </View>
-      
-        <View style={{display:'flex',flexDirection:'row',alignItems:'center'}}>
+
+        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
           <Icon name="history" size={24} color={COLORS.textColor} />
           {/* <Icon name="sort" size={24} color={COLORS.textColor} /> */}
         </View>
@@ -586,7 +612,7 @@ const MyBookings = () => {
       {/* Loading States */}
       <ScreenLoading loader={loading} message="Loading bookings..." />
       <ScreenLoading loader={actionLoading} message="Processing..." />
-    </View>
+    </ContentProtection>
   );
 };
 

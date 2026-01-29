@@ -1,0 +1,63 @@
+{
+  "auth": {
+    "loginFailed": "Inloggen mislukt",
+    "invalidCredentials": "Ongeldige inloggegevens",
+    "incorrectUsernamePassword": "De gebruikersnaam of het wachtwoord dat u heeft ingevoerd is onjuist",
+    "tooManyAttempts": "Te veel pogingen",
+    "waitBeforeRetry": "Wacht een paar minuten voordat u het opnieuw probeert",
+    "serverError": "Serverfout",
+    "serverIssues": "Onze servers ondervinden problemen. Probeer het later opnieuw",
+    "connectionError": "Verbindingsfout",
+    "checkInternetConnection": "Controleer uw internetverbinding en probeer het opnieuw",
+    "loginError": "Inlogfout",
+    "checkCredentials": "Controleer uw inloggegevens en probeer het opnieuw",
+    "loginSuccessful": "Succesvol ingelogd!",
+    "logoutSuccessful": "Succesvol uitgelogd",
+    "sessionExpired": "Uw sessie is verlopen. Log opnieuw in"
+  },
+  "network": {
+    "noConnection": "Geen internetverbinding",
+    "slowConnection": "Trage internetverbinding",
+    "requestTimeout": "Verzoek time-out",
+    "serverNotResponding": "Server reageert niet",
+    "tryAgainLater": "Probeer het later opnieuw"
+  },
+  "validation": {
+    "emailRequired": "E-mail is verplicht",
+    "passwordRequired": "Wachtwoord is verplicht",
+    "invalidEmail": "Voer een geldig e-mailadres in",
+    "passwordTooShort": "Wachtwoord moet minimaal 8 tekens bevatten",
+    "passwordMismatch": "Wachtwoorden komen niet overeen",
+    "phoneRequired": "Telefoonnummer is verplicht",
+    "invalidPhone": "Voer een geldig telefoonnummer in",
+    "nameRequired": "Naam is verplicht",
+    "ageRequired": "Leeftijd is verplicht",
+    "invalidAge": "Voer een geldige leeftijd in",
+    "fieldRequired": "Dit veld is verplicht",
+    "selectOption": "Selecteer een optie",
+    "uploadImage": "Upload minimaal één afbeelding",
+    "acceptTerms": "Accepteer de algemene voorwaarden"
+  },
+  "general": {
+    "somethingWentWrong": "Er ging iets mis",
+    "tryAgain": "Probeer het opnieuw",
+    "errorOccurred": "Er is een fout opgetreden",
+    "loadingFailed": "Laden van gegevens mislukt",
+    "saveFailed": "Opslaan van wijzigingen mislukt",
+    "uploadFailed": "Upload mislukt",
+    "deleteFailed": "Verwijderen mislukt",
+    "updateFailed": "Update mislukt",
+    "accessDenied": "Toegang geweigerd",
+    "notFound": "Niet gevonden",
+    "forbidden": "Verboden toegang",
+    "internalError": "Interne serverfout"
+  },
+  "api": {
+    "requestFailed": "Verzoek mislukt",
+    "invalidResponse": "Ongeldig antwoord van server",
+    "timeout": "Verzoek time-out",
+    "rateLimited": "Te veel verzoeken, wacht even",
+    "maintenance": "Service in onderhoud",
+    "unavailable": "Service tijdelijk niet beschikbaar"
+  }
+}

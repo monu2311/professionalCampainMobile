@@ -29,6 +29,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllAPIs } from '../../apiConfig/Services';
 import ItemsPages from './ItemsPages';
 import { ICONS } from '../../constants/Icons';
+import ContentProtection from '../../components/ContentProtection';
 const Service = () => {
     const [sendData, setSendData] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
@@ -107,7 +108,7 @@ const Service = () => {
       
 
   return (
-    <View style={styles.container}>
+    <ContentProtection style={styles.container}>
       <Animated.View style={[styles.headerContainer, { opacity: fadeAnim }]}>
         <Text style={styles.headerTitle}>Professional Services</Text>
         <Text style={styles.headerSubtitle}>Discover premium companionship services</Text>
@@ -239,7 +240,7 @@ const Service = () => {
             <ItemsPages navigation={navigation} items={sendData}/>
           </BottomSheetScrollView>
         </BottomSheetModal>
-    </View>
+    </ContentProtection>
   );
 };
 

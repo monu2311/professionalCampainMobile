@@ -21,6 +21,11 @@ const PackageScreen = () => {
 
   const submitHandler = async value => {
     try {
+      console.log("value",value);
+      const {plan } = value
+      navigation.navigate('SelectMethod',{plan:plan, totalAmount:plan?.cost,selectedHours:plan?.no_of_days});
+
+      return;
       const response = await dispatch(Buyplan(value));
       // Expect backend to return PayPal approval URL if PayPal is required
       const approvalUrl = response?.data?.approval_url || response?.approval_url || response?.data?.links?.find?.(l => l.rel === 'approval_url')?.href;
@@ -86,7 +91,7 @@ const PackageScreen = () => {
             </View>
 
             <ButtonWrapper
-              onClick={() => isActive ? null : submitHandler({ plan_id: item?.id })}
+              onClick={() => isActive ? null : submitHandler({ plan :item })}
               label={
                 isActive
                   ? `Expires on ${new Date(matchedActivePlan?.plan_end_date).toLocaleDateString()}`

@@ -1,7 +1,8 @@
 /**
  * Navigation Helper Utilities
- * Handles complex navigation logic based on user authentication state
+ * Handles complex navigation logic based on user authentication and membership state
  */
+import membershipService, { MEMBER_STATUS } from '../services/MembershipService';
 
 /**
  * Navigation Routes Constants
@@ -37,6 +38,7 @@ export const ACCOUNT_STEPS = {
   ADDITIONAL_INFO: 5,
   OPTIONS: 6,
   COMPLETED: 7,
+  HOME: 8,
 };
 
 /**
@@ -63,14 +65,46 @@ export const getPostLoginNavigation = (userDetails, navigation) => {
       account_step,
       is_plan_purchased,
       profile_type,
-      status
+      status,
+      is_user_can_logged_in
     } = userDetails;
 
-    // Check if member needs to purchase plan
-    if (!is_plan_purchased && profile_type === PROFILE_TYPES.MEMBER) {
-      return ROUTES.SELECT_PLAN;
+    // For Members (profile_type = '2'), check membership status
+    if (parseInt(profile_type) === PROFILE_TYPES.MEMBER) {
+      // Get is_plan_paid flag from user details (if available)
+      const isPlanPaid = userDetails?.is_plan_paid || false;
+
+      // Priority 1: If is_user_can_logged_in has a value, use it
+      if (is_user_can_logged_in) {
+        switch (is_user_can_logged_in) {
+          case MEMBER_STATUS.NOT_PURCHASED:
+            // Check if they've paid but haven't completed registration
+            if (isPlanPaid === true) {
+              // Continue with registration flow, don't redirect to plan selection
+              break;
+            }
+            return ROUTES.SELECT_PLAN;
+          case MEMBER_STATUS.EXPIRED:
+            // Expired members go to Home page to see the membership card
+            // The unified membership system will show the "Your Plan Has Expired" card
+            return ROUTES.HOME;
+          case MEMBER_STATUS.ACTIVE:
+            // Active members go directly to Home
+            return ROUTES.HOME;
+          default:
+            // Unknown status, treat as not purchased
+            return ROUTES.SELECT_PLAN;
+        }
+      } else {
+        // Priority 2: If is_user_can_logged_in is not set, fall back to is_plan_purchased check
+        if (!is_plan_purchased && !isPlanPaid) {
+          return ROUTES.SELECT_PLAN;
+        }
+        // If plan was purchased or paid, continue with registration flow
+      }
     }
 
+    console.log('Account Step:', account_step);
     // Navigate based on account setup step
     switch (account_step) {
       case ACCOUNT_STEPS.PROFILE_CREATION:
@@ -88,7 +122,7 @@ export const getPostLoginNavigation = (userDetails, navigation) => {
 
       default:
         // Check if profile is approved/active
-        if (status) {
+        if (status || ACCOUNT_STEPS.HOME == 8) {
           return ROUTES.HOME;
         }
 
@@ -108,17 +142,27 @@ export const getPostLoginNavigation = (userDetails, navigation) => {
  * @param {Function} navigation - Navigation object
  * @returns {boolean} Success status
  */
-export const navigatePostLogin = (userDetails, navigation) => {
+export const navigatePostLogin = async (userDetails, navigation) => {
   try {
-    const destination = getPostLoginNavigation(userDetails, navigation);
+    const destination = await getPostLoginNavigation(userDetails, navigation);
 
-    // Special case for Final screen that needs parametersP
+    // Reset navigation stack to prevent going back to login
+    // Special case for Final screen that needs parameters
     if (destination === ROUTES.FINAL) {
-      navigation.navigate(destination, {
-        value: userDetails?.status || 2,
+      navigation.reset({
+        index: 0,
+        routes: [{
+          name: destination,
+          params: {
+            value: userDetails?.status || 2,
+          }
+        }],
       });
     } else {
-      navigation.navigate(destination);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: destination }],
+      });
     }
 
     return true;

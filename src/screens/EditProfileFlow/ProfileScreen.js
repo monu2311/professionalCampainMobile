@@ -6,6 +6,7 @@ import {editProfileData} from '../../constants/Static';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchProfile} from '../../apiConfig/Services';
+import {clearProfile} from '../../reduxSlice/profileSlice';
 import FastImage from 'react-native-fast-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
@@ -116,7 +117,7 @@ const ProfileHeader = () => {
               <FastImage
                 style={styles.profileImage}
                 source={{
-                  uri: "https://thecompaniondirectory.com/public/"+profileData?.profile_image,
+                  uri: "https://thecompaniondirectory.com/"+profileData?.profile_image,
                   priority: FastImage.priority.high,
                 }}
                 resizeMode={FastImage.resizeMode.cover}
@@ -179,13 +180,37 @@ const ProfileScreen = () => {
     navigation.navigate(item);
   };
 
-  const Logout = async(item)=>{
-    await AsyncStorage.removeItem('ChapToken');
-    await AsyncStorage.removeItem('account_step');
-    navigation.reset({
-      index: 0,
-      routes: [{name: item}],
-    });
+  const Logout = async(item) => {
+    try {
+      console.log('🔄 Logging out user...');
+
+      // Clear AsyncStorage
+      await AsyncStorage.removeItem('ChapToken');
+      await AsyncStorage.removeItem('account_step');
+      console.log('✅ AsyncStorage cleared');
+
+      // Clear Redux profile state
+      dispatch(clearProfile());
+      console.log('✅ Redux profile cleared');
+
+      // Reset navigation stack to GetStarted screen
+      console.log(`🧭 Navigating to: ${item}`);
+      navigation.reset({
+        index: 0,
+        routes: [{name: item}],
+      });
+
+      console.log('✅ Logout completed successfully');
+    } catch (error) {
+      console.error('❌ Logout failed:', error);
+
+      // Fallback navigation if reset fails
+      try {
+        navigation.navigate(item);
+      } catch (navError) {
+        console.error('❌ Fallback navigation also failed:', navError);
+      }
+    }
   };
 
   const getMenuIcon = (label) => {

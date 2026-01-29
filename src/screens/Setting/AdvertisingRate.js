@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -17,16 +17,19 @@ import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs
 import Faq from './Faq';
 import { useSelector } from 'react-redux';
 import PackageScreen from './PackageScreen';
+import { getUserData } from '../../utils/authHelpers';
 
 const Tab = createMaterialTopTabNavigator();
 
 
 const CustomTabBar = ({state, descriptors, navigation, position}) => {
+  const isOnlyOneTab = state.routes.length === 1;
+
   return (
     <View
       style={{
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: isOnlyOneTab ? 'flex-start' : 'center',
         alignItems: 'center',
         borderBottomWidth: 1,
         borderBottomColor: COLORS.boxColor, // Bottom underline color
@@ -42,9 +45,10 @@ const CustomTabBar = ({state, descriptors, navigation, position}) => {
           <Pressable
             key={index}
             style={{
-              flex: 1,
+              flex: isOnlyOneTab ? 0 : 1,
               alignItems: 'center',
               paddingVertical: 10,
+              paddingHorizontal: isOnlyOneTab ? 20 : 0,
               borderBottomColor: isFocused ? COLORS.mainColor : 'transparent',
               borderBottomWidth: 1,
             }}
@@ -70,13 +74,52 @@ const AdvertisingRate = () => {
 
   const plansData = useSelector((state)=>state.planData?.plans);
 
+  // Get user profile data from Redux
+  const profileData = useSelector(state => state.profile?.user_profile);
+  const userData = useSelector(state => state.profile?.data);
+
+  // State for stored user data fallback
+  const [storedUserData, setStoredUserData] = useState(null);
+
+  // Load stored user data on component mount
+  useEffect(() => {
+    const loadStoredUserData = async () => {
+      try {
+        const stored = await getUserData();
+        console.log('AdvertisingRate: Loaded stored user data:', stored);
+        setStoredUserData(stored);
+      } catch (error) {
+        console.error('AdvertisingRate: Error loading stored user data:', error);
+      }
+    };
+    loadStoredUserData();
+  }, []);
+
+  // User data resolution with fallbacks
+  const resolveUserData = () => {
+    const fallbackData = {
+      profile_type: profileData?.profile_type || userData?.profile_type || storedUserData?.profile_type,
+    };
+
+    console.log('AdvertisingRate: Resolved user data:', fallbackData);
+    return fallbackData;
+  };
+
+  const resolvedUserData = resolveUserData();
+  const isMember = parseInt(resolvedUserData?.profile_type) === 2;
+
+  console.log('AdvertisingRate: User is member?', isMember, 'Profile type:', resolvedUserData?.profile_type);
+
   return (
     <View
       style={{backgroundColor: COLORS.white, padding: 5, flex: 1,paddingHorizontal:16}}
-     
+
     >
       <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
-        <Tab.Screen name="Packages" component={PackageScreen} />
+        {/* Conditionally render Packages tab - hide for members (profile_type: 2) */}
+        {!isMember && (
+          <Tab.Screen name="Packages" component={PackageScreen} />
+        )}
         <Tab.Screen name="FAQ" component={Faq} />
       </Tab.Navigator>
     </View>

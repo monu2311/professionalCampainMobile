@@ -24,6 +24,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {planhistory} from '../../reduxSlice/apiSlice';
 import Nodatafound from '../../components/Nodatafound';
 import ScreenLoading from '../../components/ScreenLoading';
+import ContentProtection from '../../components/ContentProtection';
 
 const Subscription = () => {
   const planhistoryData = useSelector(state => state?.auth?.data?.planhistory);
@@ -78,13 +79,14 @@ const Subscription = () => {
   };
 
   const renderItem = ({item, index}) => {
-    const isExpired = new Date(item?.plan_end_date) < new Date();
+    console.log("item?.plan_end_date",item?.plan_end_date)
+    const isExpired = new Date(item?.plan_end_date) < new Date(item?.created_at);
     const isRefundRequested = item?.is_refund_initiated;
 
     return (
       <View style={styles.subscriptionCard}>
         <View style={styles.cardHeader}>
-          <Text style={styles.planTitle}>{item?.plan_title}</Text>
+          <Text style={styles.planTitle}>{item?.plan_name}</Text>
           <View style={[
             styles.statusBadge,
             {
@@ -117,18 +119,6 @@ const Subscription = () => {
             value={new Date(item?.plan_end_date).toLocaleDateString()}
             icon="schedule"
           />
-
-          {isRefundRequested ? (
-            <View style={styles.refundNotice}>
-              <Icon name="info" size={16} color="#ff9800" />
-              <Text style={styles.refundText}>Refund request under process</Text>
-            </View>
-          ) : !isExpired ? (
-            <Pressable style={styles.refundButton}>
-              <Icon name="receipt-long" size={16} color={COLORS.white} />
-              <Text style={styles.refundButtonText}>Request Refund</Text>
-            </Pressable>
-          ) : null}
         </View>
       </View>
     );
@@ -145,7 +135,8 @@ const Subscription = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <ContentProtection style={styles.contentContainer}>
+        <FlatList
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -166,6 +157,7 @@ const Subscription = () => {
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
+      </ContentProtection>
 
       <ScreenLoading loader={planhistoryData?.isLoading} />
     </View>
@@ -176,6 +168,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  contentContainer: {
+    flex: 1,
   },
   listContainer: {
     flex: 1,
@@ -222,7 +217,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: TYPOGRAPHY.QUICKBLOD,
     fontWeight: '600',
-    color: COLORS.textColor,
+    color: 'black',
     flex: 1,
     lineHeight: 24,
   },

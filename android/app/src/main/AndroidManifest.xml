@@ -32,7 +32,7 @@
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
             <!-- Custom schemes -->
-            <data android:scheme="professionalcompanionship" />
+            <data android:scheme="wantsomecompany" />
             <data android:scheme="app" />
         </intent-filter>
         <!-- Deep linking configuration for HTTP/HTTPS links -->
@@ -41,8 +41,8 @@
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
             <!-- Web URLs -->
-            <data android:scheme="http" android:host="professionalcompanionship.com" />
-            <data android:scheme="https" android:host="professionalcompanionship.com" />
+            <data android:scheme="http" android:host="wantsomecompany.com" />
+            <data android:scheme="https" android:host="wantsomecompany.com" />
         </intent-filter>
       </activity>
     </application>

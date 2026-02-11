@@ -1,4 +1,4 @@
-package com.professionalcompanionship
+package com.wantsomecompany
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

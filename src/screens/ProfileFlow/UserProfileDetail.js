@@ -1870,6 +1870,7 @@ const UserProfileDetail = () => {
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
+  const [showChatButton, setShowChatButton] = useState(true);
   console.log("profileData",profileData)
 
   const checkChatRequestStatus = useSelector(state => state?.auth?.data?.checkChatRequestStatus);
@@ -1904,6 +1905,39 @@ const UserProfileDetail = () => {
 
     fetchProfileById();
   }, [userId, profile, data, dispatch, navigation]);
+
+  // Check if chat button should be shown
+  useEffect(() => {
+    const checkChatButtonVisibility = async () => {
+      // Hide chat button if current user is a companion (profile_type === 1)
+      if (currentUserProfile?.profile_type === 1 || currentUserProfile?.profile_type === '1') {
+        setShowChatButton(false);
+        return;
+      }
+
+      // Check chat request status with the profile user
+      if (profileData?.userId || profileData?.id) {
+        try {
+          const { checkChatRequestWithReceiver } = require('../../reduxSlice/apiSlice');
+          const receiverId = profileData.userId || profileData.id;
+          const response = await dispatch(checkChatRequestWithReceiver(receiverId));
+
+          console.log('Chat request status response:', response);
+
+          // Hide chat button if request_status is 'approved' or 'pending'
+          if (response?.request_status === 'approved' ||
+              response?.request_status === 'pending') {
+            setShowChatButton(false);
+          }
+        } catch (error) {
+          console.error('Error checking chat request status:', error);
+          // On error, keep the button visible
+        }
+      }
+    };
+
+    checkChatButtonVisibility();
+  }, [currentUserProfile, profileData, dispatch]);
 
   // Animation values
   const scrollY = useSharedValue(0);
@@ -2366,12 +2400,14 @@ const UserProfileDetail = () => {
         </Animated.View>
       </View>
 
-      {/* Chat Button (Left Side) */}
-      <View style={[styles.chatFloatingButton, { bottom: insets.bottom + 20 }]}>
-        <Pressable onPress={handleChat} style={styles.floatingChatButton}>
-          <Icon name="chat" size={24} color={COLORS.white} />
-        </Pressable>
-      </View>
+      {/* Chat Button (Left Side) - Only show if conditions are met */}
+      {showChatButton && (
+        <View style={[styles.chatFloatingButton, { bottom: insets.bottom + 20 }]}>
+          <Pressable onPress={handleChat} style={styles.floatingChatButton}>
+            <Icon name="chat" size={24} color={COLORS.white} />
+          </Pressable>
+        </View>
+      )}
 
       {/* Book Now Button (Right Side) - Only show if current user is NOT a companion */}
       {(currentUserProfile?.profile_type !== 1 && currentUserProfile?.profile_type !== "1") && (

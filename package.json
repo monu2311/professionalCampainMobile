@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+
     "@datadog/mobile-react-native": "^2.14.0",
     "@datadog/mobile-react-navigation": "^2.14.0",
     "@gorhom/bottom-sheet": "^5.1.6",

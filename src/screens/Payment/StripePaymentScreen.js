@@ -322,7 +322,7 @@ const PaymentForm = ({ paymentData, planDetails, onSuccess, onError, initialClie
               // New member continues profile setup
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'UploadImage' }],
+                routes: [{ name: 'CreateProfile1' }],
               });
             } else {
               // Active member goes to Home
@@ -520,7 +520,7 @@ const StripePaymentScreen = () => {
   return (
     <StripeProvider
       publishableKey={STRIPE_PUBLISHABLE_KEY}
-      merchantIdentifier="merchant.com.professionalcompanionship"
+      merchantIdentifier="merchant.com.wantsomecompany"
     >
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView

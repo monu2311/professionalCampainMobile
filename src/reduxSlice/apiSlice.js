@@ -379,7 +379,7 @@ export const search = data => {
     'search',
     { successToast: false, errorToast: false },
     'GET',
-    `/search`,
+    `/search-test`,
     null,
     BASEURLS,
     data
@@ -593,6 +593,19 @@ export const getChatRequestStats = () =>
     'GET',
     '/chat-requests/stats',
     null,
+  );
+
+/**
+ * Check chat request status with receiver (POST method)
+ * @param {number} receiverId - Receiver ID to check status with
+ */
+export const checkChatRequestWithReceiver = (receiverId) =>
+  callApi(
+    'checkChatRequestStatus',
+    { successToast: false, errorToast: false },
+    'POST',
+    `/chat-request/check-request`,
+    { receiver_id: receiverId },
   );
 
 

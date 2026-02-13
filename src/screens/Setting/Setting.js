@@ -5,6 +5,7 @@ import {
   View,
   Pressable,
   Animated,
+  Platform,
 } from 'react-native';
 import {COLORS, PADDING, TYPOGRAPHY, SHADOW} from '../../constants/theme';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -322,11 +323,12 @@ const styles = StyleSheet.create({
     ...SHADOW.heavy,
   },
   profileGradient: {
-    padding: PADDING.extralarge,
+    padding: Platform.OS === 'android' ? PADDING.extralarge : 0,
   },
   profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding:Platform.OS === 'ios' ? PADDING.extralarge : 0,
   },
   profileImageContainer: {
     position: 'relative',

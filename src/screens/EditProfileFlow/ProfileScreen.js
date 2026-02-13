@@ -454,6 +454,7 @@ const ProfileScreen = () => {
       <Animated.ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 0 : 20 }}
         // onScroll={handleScroll}
         // scrollEventThrottle={16}
       >
@@ -497,6 +498,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     ...SHADOW.heavy,
+    // paddingVertical: PADDING.extralarge,
   },
   container: {
     flex: 1,
@@ -567,11 +569,13 @@ const styles = StyleSheet.create({
     ...SHADOW.heavy,
   },
   profileGradient: {
-    padding: PADDING.extralarge,
+    padding: Platform.OS === 'android' ? PADDING.extralarge : 0,
+    // paddingHorizontal: Platform.OS === 'ios' ? PADDING.extralarge : 0,
   },
   profileContent: {
     flexDirection: 'column',
     alignItems: 'center',
+    padding:Platform.OS === 'ios' ? PADDING.extralarge : 0,
   },
   profileImageContainer: {
     position: 'relative',

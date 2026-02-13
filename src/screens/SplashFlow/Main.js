@@ -816,6 +816,7 @@ const Main = memo(() => {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: Platform.OS === 'android' ? 0 : 8,
     flex: 1,
     backgroundColor: '#2e3094',
     // backgroundColor:COLORS.white
@@ -849,7 +850,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: '#2e3094',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 32,
     position: 'absolute',
     top: 0,
     left: 0,

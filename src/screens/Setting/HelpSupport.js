@@ -5,6 +5,7 @@ import {
   Text,
   View,
   Animated,
+  Platform,
 } from 'react-native';
 import {
   COLORS,
@@ -101,7 +102,8 @@ const HelpSupport = () => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Text style={styles.heroTagline}>Want Some Company</Text>
+          <View style={{  alignItems: 'center', paddingVertical:Platform.OS === 'ios' ? PADDING.medium : 0, }}> 
+<Text style={styles.heroTagline}>Want Some Company</Text>
           <Text style={styles.heroTitle}>PROFESSIONAL COMPANIONSHIP</Text>
           <View style={styles.divider} />
           <Text style={styles.heroSubtitle}>
@@ -110,6 +112,8 @@ const HelpSupport = () => {
           <Text style={styles.heroEmphasis}>
             ✨ Building Connections, Changing Lives. ✨
           </Text>
+          </View>
+          
         </LinearGradient>
       </Animated.View>
 
@@ -238,10 +242,11 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     marginBottom: PADDING.large,
+    
   },
   heroGradient: {
-    padding: PADDING.extralarge,
-    paddingVertical: 40,
+    padding: Platform.OS === 'android' ? PADDING.extralarge : 0,
+    paddingVertical: Platform.OS === 'android' ? 40 : 0,
     alignItems: 'center',
   },
   heroTagline: {

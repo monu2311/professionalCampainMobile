@@ -2,7 +2,7 @@
  * Modern Main Screen
  * Professional companion discovery with vertical card layout and modern UI
  */
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -70,7 +70,7 @@ const TAB_BAR_HEIGHT = IOS ? 90 : 60;
  * Main Component
  * Modern companion discovery screen with vertical profile cards
  */
-const Main = () => {
+const Main = memo(() => {
   const formikRef = useRef();
     
 
@@ -321,16 +321,17 @@ const Main = () => {
     try {
       console.log('Navigating to profile:', profile.userId || profile.id);
 
-      // Dispatch getUserProfileById and navigate with the response
-      const response = await dispatch(getUserProfileById(profile.userId || profile.id));
-      console.log('Profile detail response:', response);
-
-      // Navigate to profile detail with both basic profile and detailed API response
+      // dispatch(getUserProfileById(profile.userId || profile.id));
+      // dispatch(getUserByID(profile.userId || profile.id));
+      // return;
+      // Navigate first, then load data in the destination screen
       navigation.navigate('UserProfileDetail', {
         userId: profile.userId || profile.id,
         profile: profile,
-        detailedProfile: response?.data || null
       });
+
+      // Optionally, still dispatch the action for data loading
+      // dispatch(getUserByID(profile.userId || profile.id));
     } catch (error) {
       console.error('Navigation error:', error);
       showErrorMessage(
@@ -816,7 +817,7 @@ const Main = () => {
       )} */}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

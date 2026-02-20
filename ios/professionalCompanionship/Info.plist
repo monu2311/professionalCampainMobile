@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>professionalCompanionship</string>
+	<string>wantsomecompany</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,10 +24,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.professionalcompanionship</string>
+			<string>wantsomecompany</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>professionalcompanionship</string>
+				<string>wantsomecompany</string>
 				<string>app</string>
 			</array>
 		</dict>

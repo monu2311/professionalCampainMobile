@@ -2693,7 +2693,7 @@ const UserProfileDetail = () => {
           // Detailed profile sections using mapped API data
           <>
            <AvailabilitySection profile={profileData} />
-           {/* <GallerySection profile={displayProfile} /> */}
+           <GallerySection profile={displayProfile} />
             {/* Contact Details Section - exclude user_availability as requested */}
             <ContactDetailsSection profile={displayProfile} />
 

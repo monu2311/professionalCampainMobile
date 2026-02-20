@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
-import {View, Text} from 'react-native';
+import {Platform} from 'react-native';
 import Login from '../screens/LoginFlow/Login';
 import ForgetPassword from '../screens/LoginFlow/ForgetPassword';
 import CreateAccount from '../screens/LoginFlow/CreateAccount';
@@ -60,7 +60,18 @@ const Tab = createBottomTabNavigator();
 
 function ChatStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
+    <Stack.Navigator screenOptions={{
+      headerShown: false,
+      ...Platform.select({
+        ios: {
+          gestureEnabled: true,
+          gestureDirection: 'horizontal'
+        },
+        android: {
+          animation: 'fade'
+        }
+      })
+    }}>
       {/* <Stack.ScreenUserChatListEnhanced
         name="UserChatList"
         component={UserChatList}
@@ -79,7 +90,18 @@ function ChatStack() {
 
 function ServiceStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
+    <Stack.Navigator screenOptions={{
+      headerShown: false,
+      ...Platform.select({
+        ios: {
+          gestureEnabled: true,
+          gestureDirection: 'horizontal'
+        },
+        android: {
+          animation: 'fade'
+        }
+      })
+    }}>
       <Stack.Screen
         name="Service"
         component={Service}
@@ -132,7 +154,18 @@ function TabStack() {
 
 function AuthStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}
+    <Stack.Navigator screenOptions={{
+      headerShown: false,
+      ...Platform.select({
+        ios: {
+          gestureEnabled: true,
+          gestureDirection: 'horizontal'
+        },
+        android: {
+          animation: 'fade'
+        }
+      })
+    }}
      initialRouteName='SplashScreen'
      >
       <Stack.Screen name="SplashScreen" component={SplashScreen} />

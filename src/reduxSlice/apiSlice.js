@@ -80,9 +80,9 @@ const apiSlice = createSlice({
       getCarouselUsers: { data: null, message: null, error: null, isLoading: false },
 
       // Video Upload API
-      uploadVideo: { data: null, message: null, error: null, isLoading: false }
+      uploadVideo: { data: null, message: null, error: null, isLoading: false },
 
-
+      userProfile: { data: null, message: null, error: null, isLoading: false },  
 
     },
   },
@@ -160,7 +160,9 @@ export const { start, success, failure } = apiSlice.actions;
 export const callApi =
   (apiName, toastOptions, method, url, data = {}, id, params) =>
     async dispatch => {
+      console.log(`API Call - ${apiName}:`, { method, url, data, id, params });
       dispatch(start({ apiName }));
+      
       try {
         const response = await apiCall(method, url, data, id, params);
         dispatch(success({ apiName, toastOptions, responseData: response }));

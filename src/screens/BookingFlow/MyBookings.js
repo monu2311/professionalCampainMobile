@@ -15,6 +15,7 @@ import {
   Alert,
   Dimensions,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -80,6 +81,7 @@ const MyBookings = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const [mainTab, setMainTab] = useState('Home');
 
@@ -105,7 +107,7 @@ const MyBookings = () => {
         role = 'escort';
         switch (tab) {
           case 'history':
-            // status = 'pending';
+            status = null;
             break;
           case 'cancelled':
             status = 'cancelled';
@@ -118,13 +120,13 @@ const MyBookings = () => {
         role = 'client';
         switch (tab) {
           case 'requests':
-            status = 'pending';
+            status = null;
             break;
           case 'accepted':
             status = 'accepted';
             break;
           case 'rejected':
-            status = 'rejected';
+            status = 'cancelled';
             break;
           default:
             status = 'pending';
@@ -234,6 +236,7 @@ const MyBookings = () => {
       if (response.success) {
         setShowBookingDetails(false);
         setShowRejectConfirm(false);
+        setRejectionReason('');
         fetchBookings(activeTab, false);
         NotificationService.success('Booking rejected');
       } else {
@@ -281,12 +284,12 @@ const MyBookings = () => {
   const getStatusBadgeStyle = useCallback((status) => {
     const styles = {
       pending: { backgroundColor: '#FFA500', color: '#fff' },
-      accepted: { backgroundColor: '#4CAF50', color: '#fff' },
+      confirmed: { backgroundColor: '#4CAF50', color: '#fff' },
       rejected: { backgroundColor: '#F44336', color: '#fff' },
       cancelled: { backgroundColor: '#9E9E9E', color: '#fff' },
       completed: { backgroundColor: '#2196F3', color: '#fff' },
     };
-    return styles[status] || styles.pending;
+    return styles[status] || styles.rejected;
   }, []);
 
   /**
@@ -303,6 +306,8 @@ const MyBookings = () => {
    */
   const renderBookingItem = useCallback(({ item: booking }) => {
     const statusStyle = getStatusBadgeStyle(booking.status);
+    // console.log("booking", booking);
+    // console.log("isEscort", isEscort);
 
     return (
       <Pressable
@@ -312,7 +317,7 @@ const MyBookings = () => {
         <View style={styles.bookingHeader}>
           <View style={styles.bookingInfo}>
             <Text style={styles.bookingTitle}>
-              {isEscort ? booking.client_name : booking.escort_name}
+              {isEscort ? booking.client_name : booking?.escort.name}
             </Text>
             <Text style={styles.bookingDateTime}>
               {formatBookingDateTime(booking)}
@@ -323,7 +328,7 @@ const MyBookings = () => {
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
             <Text style={[styles.statusText, { color: statusStyle.color }]}>
-              {booking.status?.toUpperCase()}
+               {booking.status != "" ? booking.status?.toUpperCase() : 'Rejected' }
             </Text>
           </View>
         </View>
@@ -393,12 +398,18 @@ const MyBookings = () => {
         visible={showBookingDetails}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowBookingDetails(false)}
+        onRequestClose={() => {
+          setShowBookingDetails(false);
+          setRejectionReason('');
+        }}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Booking Details</Text>
-            <Pressable onPress={() => setShowBookingDetails(false)}>
+            <Pressable onPress={() => {
+              setShowBookingDetails(false);
+              setRejectionReason('');
+            }}>
               <Icon name="close" size={24} color={COLORS.textColor} />
             </Pressable>
           </View>
@@ -433,7 +444,7 @@ const MyBookings = () => {
                     styles.statusText,
                     { color: getStatusBadgeStyle(selectedBooking.status).color }
                   ]}>
-                    {selectedBooking.status?.toUpperCase()}
+                    {selectedBooking.status != "" ? selectedBooking.status?.toUpperCase() : 'Rejected' }
                   </Text>
                 </View>
               </View>
@@ -448,14 +459,14 @@ const MyBookings = () => {
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Name:</Text>
                 <Text style={styles.detailValue}>
-                  {isEscort ? selectedBooking.client_name : selectedBooking.escort_name}
+                  {isEscort ? selectedBooking.client_name : selectedBooking.escort?.name}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Contact:</Text>
+                <Text style={styles.detailLabel}>Email:</Text>
                 <Text style={styles.detailValue}>
-                  {isEscort ? selectedBooking.client_contact : selectedBooking.escort_contact}
+                  {isEscort ? selectedBooking.client_email : selectedBooking.escort?.email}
                 </Text>
               </View>
             </View>
@@ -467,10 +478,27 @@ const MyBookings = () => {
                 <Text style={styles.notesText}>{selectedBooking.notes}</Text>
               </View>
             )}
+
+            {/* Rejection Reason - Only for escorts on pending bookings */}
+            {isEscort && selectedBooking.status === 'pending' && (
+              <View style={styles.detailSection}>
+                <Text style={styles.sectionTitle}>Rejection Reason <Text style={{color: '#ff3b30'}}>*</Text></Text>
+                <TextInput
+                  style={styles.reasonInput}
+                  value={rejectionReason}
+                  onChangeText={setRejectionReason}
+                  placeholder="Please enter reason for rejection (required)"
+                  placeholderTextColor={COLORS.placeHolderColor}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+            )}
           </ScrollView>
 
           {/* Action Buttons */}
-          {(canAccept || canReject || canCancel) && !isEscort && (
+          {isEscort && (
             <View style={styles.modalActions}>
               {canAccept && (
                 <ButtonWrapper
@@ -483,7 +511,14 @@ const MyBookings = () => {
               {canReject && (
                 <ButtonWrapper
                   label="Reject"
-                  onClick={() => setShowRejectConfirm(true)}
+                  onClick={() => {
+                    if (!rejectionReason || rejectionReason.trim() === '') {
+                      Alert.alert('Reason Required', 'Please enter a reason for rejecting this booking.');
+                      return;
+                    }
+                    handleRejectBooking(selectedBooking.id, rejectionReason);
+                    // setShowRejectConfirm(true);
+                  }}
                   buttonMainStyle={[styles.actionButton, styles.rejectButton]}
                 />
               )}
@@ -498,12 +533,12 @@ const MyBookings = () => {
             </View>
           )}
 
-          {isEscort &&
+          {/* {isEscort &&
             <ButtonWrapper
               label="Cancel Booking"
               onClick={() => setShowCancelConfirm(true)}
               buttonMainStyle={[styles.actionButton, styles.acceptButton]}
-            />}
+            />} */}
         </View>
       </Modal>
     );
@@ -513,7 +548,9 @@ const MyBookings = () => {
     isEscort,
     formatBookingDateTime,
     getStatusBadgeStyle,
-    handleAcceptBooking
+    handleAcceptBooking,
+    rejectionReason,
+    setRejectionReason
   ]);
 
   // Load bookings on focus
@@ -558,7 +595,7 @@ const MyBookings = () => {
 
 
       {/* Tab Bar */}
-      {renderTabBar()}
+      {/* {isCompanion && renderTabBar()} */}
 
       {/* Bookings List */}
       <FlatList
@@ -604,7 +641,7 @@ const MyBookings = () => {
         iconColor="#ef4444"
         confirmLabel="Yes, Reject"
         cancelLabel="Keep Request"
-        onConfirm={() => handleRejectBooking(selectedBooking?.id, 'Booking rejected')}
+        onConfirm={() => handleRejectBooking(selectedBooking?.id, rejectionReason || 'Booking rejected')}
         onCancel={() => setShowRejectConfirm(false)}
         destructive
       />
@@ -674,6 +711,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: PADDING.medium,
     flexGrow: 1,
+    paddingBottom: 100,
   },
   bookingCard: {
     backgroundColor: COLORS.white,
@@ -840,6 +878,18 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: '#FFA500',
+  },
+  reasonInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    padding: PADDING.medium,
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.QUICKREGULAR,
+    color: COLORS.textColor,
+    backgroundColor: '#f8f9fa',
+    minHeight: 100,
+    textAlignVertical: 'top',
   },
 });
 

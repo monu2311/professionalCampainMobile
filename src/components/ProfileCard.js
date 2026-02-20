@@ -25,6 +25,7 @@ import { COLORS, PADDING, TYPOGRAPHY, WIDTH } from '../constants/theme';
 
 // Components
 import ButtonWrapper from './ButtonWrapper';
+import { useSelector } from 'react-redux';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -53,8 +54,44 @@ const ProfileCard = ({
   onBookmark,
   isBookmarked = false,
 }) => {
+  // console.log('ProfileCard item:', item);
+  const dropDownData = useSelector(state => state?.dropDown || {});
+  // console.log('dropDownData', dropDownData);s
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+
+  /**
+   * Helper function to get country name from country_id
+   */
+  const getCountryName = (countryId) => {
+    // If country_id is not provided, return null
+    if (!countryId && countryId !== 0) return null;
+
+    // Convert to string for consistent handling
+    const countryIdStr = String(countryId);
+
+    // Check if it's a numeric string (like "9")
+    if (!isNaN(countryIdStr) && !isNaN(parseFloat(countryIdStr))) {
+      // It's a number, look it up in the Countries array
+      // console.log('Looking up country ID:', countryIdStr);
+      const countriesArray = dropDownData?.Countries?.array || [];
+      const country = countriesArray.find(c => c.value === countryIdStr);
+
+      // If found in array, return the country name
+      if (country?.item) {
+        return country.item;
+      }
+    }
+
+    // If not found in array or not a number, check if it's a valid string
+    // Only return if it's actually text (not just a number that wasn't found)
+    if (isNaN(countryIdStr)) {
+      return countryIdStr;
+    }
+
+    // Return null if it's a number that wasn't found in the array
+    return null;
+  };
   /**
    * Handle card press with animation
    */
@@ -181,7 +218,7 @@ const ProfileCard = ({
 
             {/* Location */}
             <Text style={styles.userLocation} numberOfLines={1}>
-              📍 {item?.country || item?.city || 'Location not specified'}
+              📍 {getCountryName(item?.country_id) || item?.country || item?.city || 'Location not specified'}
             </Text>
 
             {/* Description Preview */}

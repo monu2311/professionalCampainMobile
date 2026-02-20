@@ -90,6 +90,8 @@ export class AvailabilityUtils {
    * @returns {Object|null} Availability object or null
    */
   static getDayAvailability(date, availabilityArray) {
+    console.log('Checking availability for date:', date);
+    console.log('Availability array:', availabilityArray);
     try {
       // Validate inputs
       if (!date) {
@@ -210,19 +212,24 @@ export class AvailabilityUtils {
       // Check if date is in the past (allow same day with minimum notice)
       const now = moment();
       const checkDate = moment(date);
+      console.log('Checking availability for date:', checkDate);
+      console.log('Current date:', now);
+      console.log('Is checkDate valid?:', !checkDate.isValid());
 
       if (!checkDate.isValid()) {
         return false;
       }
 
+      console.log('Is checkDate valid?:', checkDate.isBefore(now, 'day'));
       // Don't allow bookings for past dates
       if (checkDate.isBefore(now, 'day')) {
         return false;
       }
-
+   console.log('Is checkDate valid?:', checkDate.isSame(now, 'day'));
       // For same day bookings, check minimum notice
       if (checkDate.isSame(now, 'day')) {
         const hoursUntilDate = checkDate.diff(now, 'hours', true);
+        console.log('hoursUntilDate:', hoursUntilDate);
         if (hoursUntilDate < DEFAULT_BOOKING_NOTICE_HOURS) {
           return false;
         }

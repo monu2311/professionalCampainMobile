@@ -54,7 +54,7 @@ const apiCall = async (
     headers,
   };
 
-
+console.log("apiCall config", config);
   if (data) {
     config.data = data;
     if (typeof FormData !== 'undefined' && data instanceof FormData) {

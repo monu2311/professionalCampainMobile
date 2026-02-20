@@ -319,11 +319,11 @@ const Main = () => {
    */
   const handleViewProfile = useCallback(async (profile) => {
     try {
-      console.log('Navigating to profile:', profile.userId || profile.id);
+      // console.log('Navigating to profile:', profile.userId || profile.id);
 
       // Dispatch getUserProfileById and navigate with the response
       const response = await dispatch(getUserProfileById(profile.userId || profile.id));
-      console.log('Profile detail response:', response);
+      // console.log('Profile detail response:', response);
 
       // Navigate to profile detail with both basic profile and detailed API response
       navigation.navigate('UserProfileDetail', {
@@ -332,7 +332,7 @@ const Main = () => {
         detailedProfile: response?.data || null
       });
     } catch (error) {
-      console.error('Navigation error:', error);
+      // console.error('Navigation error:', error);
       showErrorMessage(
         'Navigation Error',
         'Unable to open profile. Please try again.'
@@ -820,7 +820,7 @@ const Main = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: Platform.OS === 'android' ? 0 : 8,
+    paddingTop: Platform.OS === 'android' ? 8 : 8,
     flex: 1,
     backgroundColor: '#2e3094',
     // backgroundColor:COLORS.white

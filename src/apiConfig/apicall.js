@@ -54,7 +54,7 @@ const apiCall = async (
     headers,
   };
 
-console.log("apiCall config", config);
+// console.log("apiCall config", config);
   if (data) {
     config.data = data;
     if (typeof FormData !== 'undefined' && data instanceof FormData) {
@@ -67,13 +67,13 @@ console.log("apiCall config", config);
   if ( params) {
     config.params = params;
   }
-  console.log("config config",config)
+  // console.log("config config",config)
   try {
     const response = await axios(config);
-    console.log("response--->", response);
+    // console.log("response--->", response);
     return response.data;
   } catch (error) {
-    console.error("API call error:", error);
+    // console.error("API call error:", error);
 
     // Additional error handling for specific status codes
     if (error.response?.status === 401) {

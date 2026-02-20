@@ -96,7 +96,7 @@ const apiSlice = createSlice({
     },
     success: (state, action) => {
       const { apiName, responseData, toastOptions } = action.payload;
-      console.log('action.payload----', action.payload);
+      // console.log('action.payload----', action.payload);
       state.data[apiName].isLoading = false;
 
       state.data[apiName].data = apiName == "search" ? responseData?.data : responseData?.data ?? responseData;
@@ -160,7 +160,7 @@ export const { start, success, failure } = apiSlice.actions;
 export const callApi =
   (apiName, toastOptions, method, url, data = {}, id, params) =>
     async dispatch => {
-      console.log(`API Call - ${apiName}:`, { method, url, data, id, params });
+      // console.log(`API Call - ${apiName}:`, { method, url, data, id, params });
       dispatch(start({ apiName }));
       
       try {
@@ -188,7 +188,7 @@ export const callApi =
 
           dispatch(setProfile({ data: { homeCategory, cityData } }));
 
-          console.log("cityDatacityData", cityData)
+          // console.log("cityDatacityData", cityData)
 
         }
         // console.log('CALLAPI response', response);
@@ -196,8 +196,8 @@ export const callApi =
       } catch (error) {
         // console.log('CALLAPI  error', error?.response);
         // console.log('CALLAPI  error', url + ' APi ERRROR' + error);
-        console.log("API URL:- ", url);
-        console.log("API Error:- ", error);
+        // console.log("API URL:- ", url);
+        // console.log("API Error:- ", error);
         dispatch(
           failure({
             apiName,

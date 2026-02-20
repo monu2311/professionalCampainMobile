@@ -34,7 +34,7 @@ import { getFlexDirection, getJustifyContent, getTextAlign,getWritingDirection }
 
 const UploadImage = () => {
   const profileData = useSelector(state => state.profile);
-  console.log('profileDataprofileData', profileData?.gallery);
+  // console.log('profileDataprofileData', profileData?.gallery);
 
   const navigation = useNavigation();
 

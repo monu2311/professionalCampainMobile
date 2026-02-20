@@ -14,8 +14,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
 import {defaultStyles} from '../../constants/Styles';
 import {ICONS} from '../../constants/Icons';
-import WebView from 'react-native-webview';
-import HTMLView from 'react-native-htmlview';
+import HTMLContent from '../../components/HTMLContent';
 
 const AboutUs = ({navigation,data}) => {
   console.log("about us data",data)
@@ -49,13 +48,11 @@ const AboutUs = ({navigation,data}) => {
         }}>
        {data?.title}
       </Text>
-      {/* <WebView
-    originWhitelist={['*']}
-    source={{ html:data?.description }}
-/> */}
-<HTMLView
-        value={data?.description}
-        stylesheet={htmlStyle}
+      <HTMLContent
+        content={data?.description}
+        fontSize={14}
+        textColor={COLORS.textColor}
+        fontFamily={TYPOGRAPHY.QUICKREGULAR}
       />
      
     </ScrollView>
@@ -80,12 +77,6 @@ const styles = StyleSheet.create({
     height: HEIGHT * 0.25,
     alignSelf: 'center',
     borderRadius: 10,
-  },
-});
-
-const htmlStyle = StyleSheet.create({
-  p: {
-    fontWeight: '300',
   },
 });
 

@@ -44,7 +44,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Details = () => {
   const formikRef = useRef();
   const profileData = useSelector(state => state?.profile || {});
-  console.log('profileDataprofileData', profileData);
+  // console.log('profileDataprofileData', profileData);
   const dropDownData = useSelector(state => state?.dropDown || {});
   const navigation = useNavigation();
   const route = useRoute();

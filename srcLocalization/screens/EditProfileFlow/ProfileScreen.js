@@ -182,7 +182,7 @@ const ProfileScreen = () => {
   const profileCardScale = useRef(new Animated.Value(1)).current;
   const profileCardRotate = useRef(new Animated.Value(0)).current;
 
-  console.log('profileDataprofileData', profileData);
+  // console.log('profileDataprofileData', profileData);
 
   const nextHandler = item => {
     navigation.navigate(item);

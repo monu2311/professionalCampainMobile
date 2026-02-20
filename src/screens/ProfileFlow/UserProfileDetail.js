@@ -788,7 +788,7 @@
 //                 priority: FastImage.priority.high,
 //                 cache: FastImage.cacheControl.immutable,
 //               }}
-              
+
 //               resizeMode={FastImage.resizeMode.cover}
 //             />
 
@@ -1427,6 +1427,7 @@ import { COLORS, PADDING, TYPOGRAPHY } from '../../constants/theme';
 
 // Components
 import BookingModal from '../../components/BookingModal';
+import HTMLContent from '../../components/HTMLContent';
 
 // Navigation and utilities
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -1442,103 +1443,57 @@ const COLLAPSED_HEADER_HEIGHT = 90;
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
-/**
- * Section Components
- */
-
-// Profile Info Section Component
-const ProfileInfoSection = ({ profile }) => (
-  <View style={sectionStyles.container}>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="location-on" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Location</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.location || profile?.city || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="work" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Profile Type</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.profile_type || 'Trained Companions'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="height" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Height</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.height || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="visibility" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Eyes</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.eye_color || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="cake" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Age</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.age || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="person" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Name</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.name || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="location-city" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>City</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.city || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="palette" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Hair Color</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.hair_color || 'Not specified'}</Text>
-    </View>
-    <View style={sectionStyles.row}>
-      <View style={sectionStyles.labelContainer}>
-        <Icon name="fitness-center" size={16} color={COLORS.specialTextColor} />
-        <Text style={sectionStyles.label}>Body Type</Text>
-      </View>
-      <Text style={sectionStyles.value}>{profile?.body_type || 'Not specified'}</Text>
-    </View>
-  </View>
-);
 
 // About Section Component
-const AboutSection = ({ profile }) => (
-  <>
-    {profile?.description && (
-      <View style={sectionStyles.container}>
-        <View style={sectionStyles.titleContainer}>
-          <Icon name="info" size={20} color={COLORS.specialTextColor} />
-          <Text style={sectionStyles.sectionTitle}>About me</Text>
-        </View>
-        <Text style={sectionStyles.description}>{profile.description}</Text>
-      </View>
-    )}
+const AboutSection = ({ profile }) => {
+  const aboutContent = profile?.about_me || profile?.description;
+  const reviewsContent = profile?.my_reviews || profile?.reviews;
+  // console.log('About content:', aboutContent);ss
+  // console.log('Reviews content:', profile);
 
-    {profile?.reviews && (
-      <View style={sectionStyles.container}>
-        <View style={sectionStyles.titleContainer}>
-          <Icon name="star" size={20} color={COLORS.specialTextColor} />
-          <Text style={sectionStyles.sectionTitle}>Reviews</Text>
+  return (
+    <>
+      {aboutContent && (
+        <View style={sectionStyles.container}>
+          <View style={sectionStyles.titleContainer}>
+            <Icon name="info" size={20} color={COLORS.specialTextColor} />
+            <Text style={sectionStyles.sectionTitle}>About me</Text>
+          </View>
+          <HTMLContent
+            content={aboutContent}
+            fontSize={16}
+            textColor={COLORS.textColor}
+            fontFamily={TYPOGRAPHY.QUICKREGULAR}
+            renderAsText={!profile?.about_me}
+            customStyles={{
+              plainText: sectionStyles.description,
+            }}
+          />
         </View>
-        <Text style={sectionStyles.description}>{profile.reviews}</Text>
-      </View>
-    )}
-  </>
-);
+      )}
+
+      {reviewsContent && (
+        <View style={sectionStyles.container}>
+          <View style={sectionStyles.titleContainer}>
+            <Icon name="star" size={20} color={COLORS.specialTextColor} />
+            <Text style={sectionStyles.sectionTitle}>Reviews</Text>
+          </View>
+          <HTMLContent
+            content={reviewsContent}
+            fontSize={16}
+            textColor={COLORS.textColor}
+            fontFamily={TYPOGRAPHY.QUICKREGULAR}
+            renderAsText={!profile?.my_reviews}
+            customStyles={{
+              plainText: sectionStyles.description,
+            }}
+          />
+        </View>
+      )}
+    </>
+  );
+};
+
 
 // Categories and Services Section
 const CategoriesServicesSection = ({ profile }) => (
@@ -1610,7 +1565,7 @@ const AvailabilitySection = ({ profile }) => {
       // Only return invalid if no times at all
       return { from: '--', until: '--', isAvailable: false, status: 'invalid-time' };
     } catch (error) {
-      console.error('Error processing day availability:', error);
+      // console.error('Error processing day availability:', error);
       return { from: '--', until: '--', isAvailable: false, status: 'error' };
     }
   };
@@ -1857,7 +1812,8 @@ const UserProfileDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-
+  const dropDownData = useSelector(state => state?.dropDown || {});
+  // console.log("dropDownData", dropDownData)
   //DISPATCH
   const dispatch = useDispatch();
 
@@ -1871,7 +1827,7 @@ const UserProfileDetail = () => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [showChatButton, setShowChatButton] = useState(true);
-  console.log("profileData",profileData)
+  // console.log("profileData", profileData)
 
   // Map API data to profile format for display
   const mapApiDataToProfile = (apiData) => {
@@ -1922,7 +1878,9 @@ const UserProfileDetail = () => {
       // Display data
       profile_image: gallery,
       description: userProfile?.description || userProfile?.bio,
+      about_me: userProfile?.about_me,
       is_vip: userProfile?.is_vip || userProfile?.vip_status,
+      my_reviews: userProfile?.my_reviews || userProfile?.reviews,
 
       // Keep original data for reference
       originalData: apiData
@@ -1933,8 +1891,8 @@ const UserProfileDetail = () => {
   const mappedProfileData = detailedProfile ? mapApiDataToProfile(detailedProfile) : {};
 
   // Debug logging
-  console.log("UserProfileDetail - detailedProfile:", detailedProfile);
-  console.log("UserProfileDetail - mappedProfileData:", mappedProfileData);
+  // console.log("UserProfileDetail - detailedProfile:", detailedProfile);
+  // console.log("UserProfileDetail - mappedProfileData:", mappedProfileData);
 
   const checkChatRequestStatus = useSelector(state => state?.auth?.data?.checkChatRequestStatus);
   const currentUserProfile = useSelector(state => state.profile?.user_profile);
@@ -1951,13 +1909,13 @@ const UserProfileDetail = () => {
           if (response?.payload?.status === 1 || response?.payload?.data) {
             const fetchedProfile = response.payload?.data || response.payload;
             setProfileData(fetchedProfile);
-            console.log('Fetched profile by ID:', fetchedProfile);
+            // console.log('Fetched profile by ID:', fetchedProfile);
           } else {
             showErrorMessage('Profile Not Found', 'Unable to load this profile');
             navigation.goBack();
           }
         } catch (error) {
-          console.error('Error fetching profile:', error);
+          // console.error('Error fetching profile:', error);
           showErrorMessage('Error', 'Failed to load profile');
           navigation.goBack();
         } finally {
@@ -1985,15 +1943,15 @@ const UserProfileDetail = () => {
           const receiverId = profileData.userId || profileData.id;
           const response = await dispatch(checkChatRequestWithReceiver(receiverId));
 
-          console.log('Chat request status response:', response);
+          // console.log('Chat request status response:', response);
 
           // Hide chat button if request_status is 'approved' or 'pending'
           if (response?.request_status === 'approved' ||
-              response?.request_status === 'pending') {
+            response?.request_status === 'pending') {
             setShowChatButton(false);
           }
         } catch (error) {
-          console.error('Error checking chat request status:', error);
+          // console.error('Error checking chat request status:', error);
           // On error, keep the button visible
         }
       }
@@ -2111,13 +2069,13 @@ const UserProfileDetail = () => {
     try {
       // First, check if user is allowed to chat
       const chatStatus = await ChatService.checkRequestStatus(profileData.userId || profileData.id, dispatch);
-      console.log("First, check if user is allowed to chat", chatStatus)
+      // console.log("First, check if user is allowed to chat", chatStatus)
       if (chatStatus.canChat) {
         // User is allowed to chat, now fetch chat data
         try {
           // Fetch all chats using /chat endpoint
           const allChatsResponse = await ChatService.getChatUsers(dispatch);
-          console.log("Fetch all chats using /chat endpoint", allChatsResponse)
+          // console.log("Fetch all chats using /chat endpoint", allChatsResponse)
           if (allChatsResponse.success && allChatsResponse.users) {
             // Filter data using user's email
             const userEmail = profileData.email || profileData.user_email;
@@ -2126,12 +2084,12 @@ const UserProfileDetail = () => {
               chat.email === userEmail ||
               chat.user_id === (profileData.userId || profileData.id)
             );
-            console.log(" Match ", matchingChat)
+            // console.log(" Match ", matchingChat)
 
             if (matchingChat) {
               // Get chat message list using the found chat ID
               const chatHistoryResponse = await ChatService.getChatHistory(matchingChat.id, dispatch);
-              console.log("chatHistoryResponse  Get chat message list using the found chat ID", chatHistoryResponse)
+              // console.log("chatHistoryResponse  Get chat message list using the found chat ID", chatHistoryResponse)
 
               // Navigate to chat screen with both chat list and user details
               navigation.navigate('Chat', {
@@ -2174,7 +2132,7 @@ const UserProfileDetail = () => {
             });
           }
         } catch (chatError) {
-          console.error('Error fetching chat data:', chatError);
+          // console.error('Error fetching chat data:', chatError);
           // Still navigate to chat even if chat data fetch fails
           navigation.navigate('Chat', {
             routeData: {
@@ -2210,7 +2168,7 @@ const UserProfileDetail = () => {
         }
       }
     } catch (error) {
-      console.error('Chat verification error:', error);
+      // console.error('Chat verification error:', error);
       showErrorMessage('Failed to verify chat status');
     }
   };
@@ -2230,7 +2188,7 @@ const UserProfileDetail = () => {
       };
 
       const result = await Share.share(shareContent);
-      console.log('Share result:', result);
+      // console.log('Share result:', result);
 
       // Note: React Native Share API detection is unreliable across platforms
       // - Android: result.action may be 'sharedAction' even when user cancels
@@ -2278,19 +2236,19 @@ const UserProfileDetail = () => {
         duration_minutes: bookingData?.duration || bookingData?.duration_minutes || 120,
       };
 
-      console.log('Checking availability with payload:', availPayload);
+      // console.log('Checking availability with payload:', availPayload);
       // return;
 
       // Step 1: Check availability
       const availabilityResponse = await BookingService.getEscortAvailability(availPayload, dispatch);
-      console.log('Availability response:', availabilityResponse);
+      // console.log('Availability response:', availabilityResponse);
 
       // Check if the API call was successful
       if (availabilityResponse?.success) {
         // Check if user is available
         // Empty availability array OR available: true means user IS available
         if (availabilityResponse.availability?.length === 0 || availabilityResponse.available === true) {
-          console.log('User is available, proceeding with booking...');
+          // console.log('User is available, proceeding with booking...');
 
           // Step 2: Create booking since user is available
           const bookingResponse = await BookingService.createBooking(bookingParams, dispatch);
@@ -2313,7 +2271,7 @@ const UserProfileDetail = () => {
         } else if (availabilityResponse.available === false) {
           // User is NOT available
           const errorMessage = availabilityResponse.reason || 'This time slot is not available';
-          console.log('User is not available:', errorMessage);
+          // console.log('User is not available:', errorMessage);
           showErrorMessage('Booking Not Available', errorMessage);
         } else {
           // Unexpected response format
@@ -2324,7 +2282,7 @@ const UserProfileDetail = () => {
         throw new Error(availabilityResponse?.message || 'Failed to check availability');
       }
     } catch (error) {
-      console.error('Booking submission error:', error);
+      // console.error('Booking submission error:', error);
 
       // Handle different error scenarios
       let errorMessage = 'Unable to process your booking. Please try again.';
@@ -2353,7 +2311,136 @@ const UserProfileDetail = () => {
     return `${location}${age}`;
   };
 
+  const getDropdownLabel = (key, value) => {
+    const dropdown = dropDownData[key]?.array;
+
+    if (!dropdown || !value) return "Not specified";
+
+    // if(key === "Height (cm)" && typeof value === "number" && value > 0){
+    const found = dropdown.find(
+      (item) => String(item.value) === String(value)
+    );
+
+    if (key === "Height (cm)" && !found && value) {
+      return `${value} cm`
+    }
+
+    return found?.item || "Not specified";
+  };
+
   // New Section Components for detailed profile data display
+
+
+  /**
+   * Section Components
+   */
+
+  // Profile Info Section Component
+  const ProfileInfoSection = ({ profile, extraData }) => (
+    <View style={sectionStyles.container}>
+      <View style={sectionStyles.titleContainer}>
+        <Icon name="person-outline" size={20} color={COLORS.specialTextColor} />
+        <Text style={sectionStyles.sectionTitle}>Personal Details</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="location-on" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Location</Text>
+        </View>
+        <Text style={sectionStyles.value}>{profile?.location || profile?.city || 'Not specified'}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="work" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Profile Type</Text>
+        </View>
+        <Text style={sectionStyles.value}>{profile?.profile_type || 'Trained Companions'}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="height" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Height</Text>
+        </View>
+        <Text style={sectionStyles.value}>{getDropdownLabel("Height (cm)", extraData?.height)}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="visibility" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Eyes</Text>
+        </View>
+        <Text style={sectionStyles.value}>{getDropdownLabel("Eyes", profile?.eyes || extraData?.eyes)}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="cake" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Age</Text>
+        </View>
+        <Text style={sectionStyles.value}>{profile?.age || 'Not specified'}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="person" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Name</Text>
+        </View>
+        <Text style={sectionStyles.value}>{profile?.name || 'Not specified'}</Text>
+      </View>
+      {/* <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="location-city" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>City</Text>
+        </View>
+        <Text style={sectionStyles.value}>{getDropdownLabel("City", profile?.city || extraData?.suburbs) || profile?.city || extraData?.suburbs || 'Not specified'}</Text>
+      </View> */}
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="palette" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Hair Color</Text>
+        </View>
+        <Text style={sectionStyles.value}>{getDropdownLabel("Hair Color", extraData?.hair_color)}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="palette" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Dress Size </Text>
+        </View>
+        <Text style={sectionStyles.value}>{getDropdownLabel("Dress Size", extraData?.dress_size)}</Text>
+      </View>
+      <View style={sectionStyles.row}>
+        <View style={sectionStyles.labelContainer}>
+          <Icon name="fitness-center" size={16} color={COLORS.specialTextColor} />
+          <Text style={sectionStyles.label}>Body Type</Text>
+        </View>
+        <Text style={sectionStyles.value}>{getDropdownLabel("Body Type", profile?.body_type || extraData?.body_type)}</Text>
+      </View>
+      {extraData?.ethnicity && (
+        <View style={sectionStyles.row}>
+          <View style={sectionStyles.labelContainer}>
+            <Icon name="public" size={16} color={COLORS.specialTextColor} />
+            <Text style={sectionStyles.label}>Ethnicity</Text>
+          </View>
+          <Text style={sectionStyles.value}>{extraData.ethnicity}</Text>
+        </View>
+      )}
+      {extraData?.education && (
+        <View style={sectionStyles.row}>
+          <View style={sectionStyles.labelContainer}>
+            <Icon name="school" size={16} color={COLORS.specialTextColor} />
+            <Text style={sectionStyles.label}>Education</Text>
+          </View>
+          <Text style={sectionStyles.value}>{extraData.education}</Text>
+        </View>
+      )}
+      {profile?.gender && (
+        <View style={sectionStyles.row}>
+          <View style={sectionStyles.labelContainer}>
+            <Icon name="wc" size={16} color={COLORS.specialTextColor} />
+            <Text style={sectionStyles.label}>Gender</Text>
+          </View>
+          <Text style={sectionStyles.value}>{profile.gender}</Text>
+        </View>
+      )}
+    </View>
+  );
 
   /**
    * Contact Details Section Component
@@ -2410,15 +2497,15 @@ const UserProfileDetail = () => {
           <Text style={sectionStyles.sectionTitle}>My Selfie Gallery</Text>
         </View>
 
-        {/* <View style={sectionStyles.galleryGrid}>
-          {profile?.profile_image.map((imageUrl, index) => (
+        <View style={sectionStyles.galleryGrid}>
+          {profile?.profile_image?.map((item, index) => (
             <Pressable
               key={index}
               style={sectionStyles.galleryItem}
-              onPress={() => setSelectedImage(imageUrl?.profile_image)}
+              // onPress={() => setSelectedImage(item?.gallery_image)}
             >
               <FastImage
-                source={{ uri: imageUrl?.profile_image }}
+                source={{ uri: item?.gallery_image }}
                 style={sectionStyles.galleryImage}
                 resizeMode={FastImage.resizeMode.cover}
               />
@@ -2427,7 +2514,7 @@ const UserProfileDetail = () => {
               </View>
             </Pressable>
           ))}
-        </View> */}
+        </View>
 
         {/* Image Modal would go here */}
       </View>
@@ -2459,7 +2546,7 @@ const UserProfileDetail = () => {
               <Icon name="height" size={16} color={COLORS.specialTextColor} />
               <Text style={sectionStyles.label}>Height</Text>
             </View>
-            <Text style={sectionStyles.value}>{profile.height}</Text>
+            <Text style={sectionStyles.value}>{profile.height || dropDownData["Height (cm)"]}</Text>
           </View>
         )}
         {profile?.weight && (
@@ -2686,58 +2773,31 @@ const UserProfileDetail = () => {
     return (
       <View style={styles.contentContainer}>
         {/* Profile Info Section */}
-        <ProfileInfoSection profile={profileData} />
+        <ProfileInfoSection profile={profileData} extraData={displayProfile} />
 
-        {/* Conditional rendering based on detailed profile availability */}
-        {detailedProfile ? (
-          // Detailed profile sections using mapped API data
-          <>
-           <AvailabilitySection profile={profileData} />
-           {/* <GallerySection profile={displayProfile} /> */}
-            {/* Contact Details Section - exclude user_availability as requested */}
-            <ContactDetailsSection profile={displayProfile} />
+        {/* Gallery Section */}
+        <GallerySection profile={displayProfile} />
 
-            {/* Personal Details Section */}
-            <PersonalDetailsSection profile={displayProfile} />
-            
+        {/* // Regular profile sections for existing users */}
+        <>
+          {/* About Section */}
+          <AboutSection profile={displayProfile} />
 
-            {/* Profile Categories Section */}
-            <ProfileCategoriesSection profile={displayProfile} />
+          {/* Categories and Services Section */}
+          <CategoriesServicesSection profile={profileData} />
 
-            {/* Services Section */}
-            <ServicesSection profile={displayProfile} />
+          {/* Availability Section */}
+          <AvailabilitySection profile={profileData} />
 
-            {/* Options Section */}
-            <OptionsSection profile={displayProfile} />
+          {/* Contact Section */}
+          <ContactSection profile={profileData} />
 
-            {/* About Section */}
-            <AboutSection profile={profileData} />
+          {/* Interests Section */}
+          <InterestsSection profile={profileData} />
 
-            {/* Gallery Section */}
-            <GallerySection profile={profileData} />
-          </>
-        ) : (
-          // Regular profile sections for existing users
-          <>
-            {/* About Section */}
-            <AboutSection profile={profileData} />
+         
+        </>
 
-            {/* Categories and Services Section */}
-            <CategoriesServicesSection profile={profileData} />
-
-            {/* Availability Section */}
-            <AvailabilitySection profile={profileData} />
-
-            {/* Contact Section */}
-            <ContactSection profile={profileData} />
-
-            {/* Interests Section */}
-            <InterestsSection profile={profileData} />
-
-            {/* Gallery Section */}
-            <GallerySection profile={profileData} />
-          </>
-        )}
       </View>
     );
   };
@@ -2771,7 +2831,7 @@ const UserProfileDetail = () => {
                 priority: FastImage.priority.high,
                 cache: FastImage.cacheControl.immutable,
               }}
-              
+
               resizeMode={FastImage.resizeMode.cover}
             />
 

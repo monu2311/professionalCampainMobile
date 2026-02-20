@@ -90,7 +90,7 @@ const apiSlice = createSlice({
     },
     success: (state, action) => {
       const {apiName, responseData, toastOptions} = action.payload;
-      console.log('action.payload----',  action.payload);
+      // console.log('action.payload----',  action.payload);s
       state.data[apiName].isLoading = false;
      
       state.data[apiName].data = apiName == "search" ? responseData?.data : responseData?.data ?? responseData;

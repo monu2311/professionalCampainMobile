@@ -225,7 +225,8 @@ export class AvailabilityUtils {
       if (checkDate.isBefore(now, 'day')) {
         return false;
       }
-   console.log('Is checkDate valid?:', checkDate.isSame(now, 'day'));
+
+      console.log('Is checkDate valid?:', checkDate.isSame(now, 'day'));
       // For same day bookings, check minimum notice
       if (checkDate.isSame(now, 'day')) {
         const hoursUntilDate = checkDate.diff(now, 'hours', true);
